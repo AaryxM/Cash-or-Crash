@@ -28,6 +28,7 @@ You play as a cat running a refreshment stand during the hottest summer ever. Cu
 ---
 
 ## 📂 Project Structure
+\\\
 cash_or_crash/
 │── main.py              # Entry point
 │── ui.py                # Tkinter windows, menus, gameplay screens
@@ -38,3 +39,4 @@ cash_or_crash/
 │   └── sounds/          # Audio effects (optional)
 │── game.db              # SQLite database file
 │── README.md            # Project documentation
+\\\

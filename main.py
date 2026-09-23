@@ -1,6 +1,7 @@
 import tkinter as tk
 from ui import IntroFrame, MenuFrame, GameFrame
-# from db import init_db   # uncomment later when you add SQL
+# from db import init_db   
+# uncomment later when you add SQL
 
 class App(tk.Tk):
     def __init__(self):

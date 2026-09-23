@@ -1,69 +1,142 @@
 import tkinter as tk
-from game_logic import get_random_order, check_order, update_balance
+from tkinter import ttk
+from PIL import Image, ImageTk
 
-# --- Intro Screen ---
-class IntroFrame(tk.Frame):
-    def __init__(self, master, switch_frame):
-        super().__init__(master)
-        tk.Label(self, text="☀️ The hottest summer ever!").pack(pady=20)
-        tk.Button(self, text="Start Game", command=lambda: switch_frame("MenuFrame")).pack()
+colors = {
+    "cream": "#FFF9ED",
+    "paper": "#FFFDF7",
+    "coral": "#E37162",
+    "coral_dark": "#A94F48",
+    "brown": "#604432",
+    "muted": "#987B65",
+    "sky": "#A9DCE0",
+    "yellow": "#F5CD69",
+    "green": "#79A66E",
+    "counter": "#B9764D",
+}
+
+class CashOrCrashApp(tk.Tk):
+    #passing in tk.Tk so that this whole class itself is the main window.
+    def __init__(self):
+        super().__init__()
+        self.configure(bg = colors["cream"])
+
+        self.geometry('2114x1321')
+        # self.session: GameSession | None = None
+
+        # self.attributes("-fullscreen", True)
+
+    def config_styles(self):
+        #---for basic styling
+        style = ttk.Style(self)
+        style.theme_use("clam")
+        #style.configure(stylederivedname, font, fg, padding)
+        style.configure(
+            "Coral.TButton", 
+            font = ("retro_font", 12, "bold"),
+            foreground = "white",
+            background = colors["coral"],
+            padding = (100,30),
+        )
+        style.map(
+            "Coral.TButton",
+            foreground=[("active", colors["paper"])],
+            background=[("active", colors["coral_dark"])]
+        )
+
+    def clear_windows(self):
+        for small_window in self.winfo_children():
+            small_window.destroy()
+
+    #Intro interface
+    def intro(self):
+        # displays the intro screen with game title, description, and name entry.
+
+        self.clear_windows()
+        #C = Canvas(root, height, width, bd, bg, ..)
+        # canvas = tk.Canvas(self, bg = colors["sky"], bd = 0)
+
+        #🏖️bg image
+        self.config_styles()
+        bgimg = Image.open("bg_img2.png")
+        bgimg = bgimg.resize((1800, 915))   # new size
+
+        self.bg_img2 = ImageTk.PhotoImage(bgimg)
+
+        background_label = tk.Label(self, image = self.bg_img2)
+
+        background_label.place(relwidth=1, relheight=1)
+
+        #game logo ⚒️🛠️
+        #og = 1432 × 736 
+       
+
+        logoimg = Image.open("game_logo.png")
+        logoimg = logoimg.resize((700,350))
+
+        self.logo_img = ImageTk.PhotoImage(logoimg)
+
+        logo_label = tk.Label(self, image = self.logo_img)
+
+        logo_label.pack()
+
+        # start_btn = ttk.Button(self, text = "START", height="5", width="50", padx="1", pady="1", style = "Coral.TButton")
+        start_btn = ttk.Button(
+            self,
+            text="START",
+            style="Coral.TButton",
+            command=self.show_game
+        )
+        start_btn.pack(anchor='s')
+
+        # start_btn.bind("<Button-1>", self.show_game)
+
+    def show_game(self):
+        self.clear_windows()
+        #headers with the current session details!
+        header = tk.Frame(self, bg = colors["paper"], padx = 35, pady = 30)
+
+        header.pack(side="top", fill ='both')
+
+        tk.Label(
+            header,
+            text = "Cash or Crash",
+            background= colors["paper"],
+            foreground=colors["coral"],
+            font = ("retro_font", 18, "bold"),
+        ).pack(side="left")
+
+        #🛠️⚒️connect to db for current session's balance.
+        bal = 100
+        self.balance = tk.Label(
+            header,
+            text= f"BALANCE: ${bal}",
+            background=colors["paper"],
+            foreground=colors["brown"],
+            font = ("retro_font", 18, "bold"),
+            justify = "left"
+        )
+
+        self.balance.pack(side="right")
+        #1048 x 517
+        _stand = Image.open("stand_img.png")
+        _stand = _stand.resize((1700, 900))
+
+        self.stand_img = ImageTk.PhotoImage(_stand)
+
+        stand_label = tk.Label(self, image = self.stand_img, background=colors["sky"])
+
+        stand_label.pack(side="top")
 
 
-# --- Main Menu ---
-class MenuFrame(tk.Frame):
-    def __init__(self, master, switch_frame):
-        super().__init__(master)
-        tk.Label(self, text="🍹 Cash or Crash Menu").pack(pady=20)
-        tk.Button(self, text="Play", command=lambda: switch_frame("GameFrame")).pack()
-        tk.Button(self, text="Instructions", command=lambda: switch_frame("IntroFrame")).pack()
-        tk.Button(self, text="Exit", command=master.quit).pack()
+
+    def draw_intro():
+        pass
 
 
-# --- Gameplay Screen ---
-class GameFrame(tk.Frame):
-    def __init__(self, master, switch_frame):
-        super().__init__(master)
-        self.switch_frame = switch_frame
-        self.balance = 0
-        self.current_drink = None
-        self.chosen_ingredients = []
+    def show_result():
+        pass
 
-        self.order_label = tk.Label(self, text="Customer order will appear here")
-        self.order_label.pack(pady=10)
-
-        # Ingredient buttons
-        self.ingredients = ["mango", "milk", "ice", "lemon", "sugar", "water", "tea"]
-        for ing in self.ingredients:
-            tk.Button(self, text=ing, command=lambda i=ing: self.add_ingredient(i)).pack(side="left", padx=5)
-
-        tk.Button(self, text="Serve Drink", command=self.serve_drink).pack(pady=20)
-
-        self.result_label = tk.Label(self, text="")
-        self.result_label.pack(pady=10)
-
-        tk.Button(self, text="End Day", command=lambda: switch_frame("EndFrame")).pack()
-
-    def add_ingredient(self, ingredient):
-        self.chosen_ingredients.append(ingredient)
-
-    def serve_drink(self):
-        self.current_drink = get_random_order()
-        self.order_label.config(text=f"Customer wants: {self.current_drink}")
-
-        success = check_order(self.current_drink, self.chosen_ingredients)
-        self.balance = update_balance(self.balance, success)
-
-        if success:
-            self.result_label.config(text=f"✅ Correct! Balance: {self.balance}")
-        else:
-            self.result_label.config(text=f"❌ Wrong! Balance: {self.balance}")
-
-        self.chosen_ingredients.clear()
-
-
-# --- End Screen ---
-class EndFrame(tk.Frame):
-    def __init__(self, master, switch_frame):
-        super().__init__(master)
-        tk.Label(self, text="Day Summary").pack(pady=20)
-        tk.Button(self, text="Back to Menu", command=lambda: switch_frame("MenuFrame")).pack()
+c = CashOrCrashApp()
+c.intro()
+c.mainloop()
