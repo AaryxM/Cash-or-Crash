@@ -2,7 +2,7 @@
 # 🍹 Cash or Crash: Summer Juice Stand
 
 A cozy summer café/juice stand themed game built with **Python**, **Tkinter**, and **SQLite**.  
-You play as a cat running a refreshment stand during the hottest summer ever. Customers arrive with drink orders, and your job is to prepare them correctly. Serve drinks well to earn cash — mess up and you lose money. At the end of the day, pay rent and see if your stand survives or crashes!
+You play as a cat running a refreshment stand during the hottest summer ever. Customers arrive with drink orders, and your job is to prepare them correctly. Serve drinks well to earn cash. Mess up and you lose money. At the end of the day, pay supplies cost and see if your stand survives or crashes!
 
 ---
 
