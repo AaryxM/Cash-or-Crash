@@ -1,6 +1,6 @@
 import tkinter as tk
 from ui import IntroFrame, MenuFrame, GameFrame
-# from db import init_db   
+from db import init_db   
 # uncomment later when you add SQL
 
 class App(tk.Tk):
@@ -10,7 +10,7 @@ class App(tk.Tk):
         self.geometry("800x600")
 
         # Initialize DB later
-        # init_db()
+        init_db()
 
         # Container for frames
         self.frames = {}
@@ -25,7 +25,8 @@ class App(tk.Tk):
     def switch_frame(self, frame_name):
         """Raise the selected frame to the top."""
         self.frames[frame_name].tkraise()
-
+        
+#temporary
 if __name__ == "__main__":
     app = App()
     app.mainloop()
