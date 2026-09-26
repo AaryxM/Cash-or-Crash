@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
-
+from db import save_order
 from game_logic import (
     get_random_order,
     check_order,
@@ -88,8 +88,7 @@ class CashOrCrashApp(tk.Tk):
         logo_label.pack()
 
         start_btn = ttk.Button(
-            self,
-            text="START",
+            self,text="START",
             style="Coral.TButton",
             command=self.show_game
         )
@@ -118,14 +117,12 @@ class CashOrCrashApp(tk.Tk):
 
         # Get a random customer order
         self.current_order = get_random_order()
+        self.orders = []
 
-        tk.Label(
-            header,
-            text=f"CUSTOMER ORDER: {self.current_order}",
-            background=colors["paper"],
-            foreground=colors["brown"],
-            font=("retro_font", 18, "bold")
-        ).pack(side="left", padx=50)
+        self.order_label = tk.Label(header,text=f"CUSTOMER ORDER: {self.current_order}",
+            background=colors["paper"],foreground=colors["brown"],
+            font=("retro_font", 18, "bold"))
+        self.order_label.pack(side="left", padx=50)
 
         # 🛠️⚒️ connect to db for current session's balance.
         self.current_balance = 100
@@ -165,15 +162,11 @@ class CashOrCrashApp(tk.Tk):
 
         for ingredient in ingredients:
             button = tk.Button(
-                ingredient_frame,
-                text=ingredient.title(),
+                ingredient_frame,text=ingredient.title(),
                 font=("retro_font", 12, "bold"),
-                bg=colors["yellow"],
-                fg=colors["brown"],
-                padx=12,
-                pady=6,
-                command=lambda item=ingredient: self.select_ingredient(item)
-            )
+                bg=colors["yellow"],fg=colors["brown"],
+                padx=12,pady=6,
+                command=lambda item=ingredient: self.select_ingredient(item))
 
             button.pack(side="left", padx=3)
             self.ingredient_buttons[ingredient] = button
@@ -181,10 +174,16 @@ class CashOrCrashApp(tk.Tk):
             check_button = tk.Button(
             self,text="CHECK ORDER",font=("retro_font", 14, "bold"),
             bg=colors["coral"],fg="white",
-            padx=25,pady=10,
-            command=self.check_current_order)
+            padx=25,pady=10,command=self.check_current_order)
 
             check_button.place(relx=0.5,rely=0.95,anchor="center")
+
+            end_day_button = tk.Button(
+            self,text="END DAY",font=("retro_font", 12, "bold"),
+            bg=colors["brown"],fg="white",
+            padx=20,pady=8,command=self.finish_day)
+
+            end_day_button.place(relx=0.85,rely=0.95,anchor="center")
 
             self.result_label = tk.Label(self,text="",
             background=colors["cream"],foreground=colors["brown"],
@@ -201,20 +200,15 @@ class CashOrCrashApp(tk.Tk):
 
     # checks if the selected ingredients match the recipe for the current order and updates the balance accordingly.
     def check_current_order(self):
-        success = check_order(
-            self.current_order,
-            self.selected_ingredients
-        )
+        success = check_order(self.current_order,self.selected_ingredients)            
+        save_order(self.current_order, success)
+        self.orders.append({"drink": self.current_order,"success": success})
 
-        current_balance = 100
-
-        if hasattr(self, "current_balance"):
-            current_balance = self.current_balance
-
-        self.current_balance = update_balance(current_balance,success)
-
+        # Update balance
+        self.current_balance = update_balance(self.current_balance,success)
         self.balance.config(text=f"BALANCE: ${self.current_balance}")
 
+        # Show result
         if success:
             result_text = "✓ CORRECT ORDER! +$10"
             result_color = colors["green"]
@@ -225,13 +219,42 @@ class CashOrCrashApp(tk.Tk):
         self.result_label.config(text=result_text,foreground=result_color)
 
         print(result_text)
-        
         print("Current balance:", self.current_balance)
 
-        self.result_label = tk.Label(self,text="",background=colors["cream"],
-        foreground=colors["brown"],font=("retro_font", 18, "bold"))
+        # Wait 1 second, then start the next order
+        self.after(1000, self.start_next_order)
 
-        self.result_label.place(relx=0.5,rely=0.78,anchor="center")
+    # function to run in a loop
+    def start_next_order(self):
+        # Generate a new customer order
+        self.current_order = get_random_order()
+
+        # Update customer order on screen
+        self.order_label.config(text=f"CUSTOMER ORDER: {self.current_order}")
+
+        # Reset selected ingredients
+        self.selected_ingredients = []
+
+        # Reset ingredient buttons to yellow
+        for button in self.ingredient_buttons.values():
+            button.config(bg=colors["yellow"])
+
+        # Clear previous result
+        self.result_label.config(text="")
+
+        print("Next order:", self.current_order)
+
+    def finish_day(self):
+        final_balance = end_day(self.current_balance)
+
+        # Update balance
+        self.current_balance = final_balance
+
+        self.balance.config(text=f"BALANCE: ${self.current_balance}")
+
+        print("End of day!")
+        print("Rent: $30")
+        print("Final balance:", self.current_balance)
 
     def draw_intro():
         pass
