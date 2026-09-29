@@ -44,3 +44,21 @@ def get_summary(orders):
         "correct_orders": correct,
         "wrong_orders": wrong
     }
+
+#temporary 
+if __name__ == "__main__":
+    drink = get_random_order()
+    print("Customer ordered:", drink)
+
+    ingredients = recipes[drink]
+    print("Required ingredients:", ingredients)
+
+    result = check_order(drink, ingredients)
+    print("Correct:", result)
+
+    balance = 100
+    balance = update_balance(balance, result)
+    print("Balance after order:", balance)
+
+    balance = end_day(balance)
+    print("Balance after rent:", balance)
