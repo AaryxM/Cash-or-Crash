@@ -103,7 +103,7 @@ class CashOrCrashApp(tk.Tk):
             self,
             bg=colors["paper"],
             padx=35,
-            pady=30
+            pady=15
         )
 
         header.pack(side="top", fill='both')
@@ -141,8 +141,8 @@ class CashOrCrashApp(tk.Tk):
         self.balance.pack(side="right")
 
         # Stand image
-        _stand = Image.open("stand_img.png")
-        _stand = _stand.resize((1700, 900))
+        _stand = Image.open('stand.png')
+        _stand = _stand.resize((1500, 780))
 
         self.stand_img = ImageTk.PhotoImage(_stand)
 
