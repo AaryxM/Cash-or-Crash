@@ -7,7 +7,8 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Cash or Crash: Juice Stand")
-        self.geometry("800x600")
+        # self.geometry("800x600")
+        self.attributes(-"-fullscreen", True)
 
         # Initialize DB later
         init_db()

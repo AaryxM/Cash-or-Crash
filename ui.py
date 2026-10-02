@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from db import save_order
+
 from game_logic import (
     get_random_order,
     check_order,
@@ -16,12 +17,14 @@ colors = {
     "paper": "#FFFDF7",
     "coral": "#E37162",
     "coral_dark": "#A94F48",
-    "brown": "#604432",
-    "muted": "#987B65",
+    "brown": "#e4bb8f",
+    "brown_dark": "#bd8361",
+    "muted": "#d59f70",
     "sky": "#A9DCE0",
-    "yellow": "#F5CD69",
+    "yellow_light": "#fbf4df",
     "green": "#79A66E",
     "counter": "#B9764D",
+
 }
 
 class CashOrCrashApp(tk.Tk):
@@ -29,6 +32,7 @@ class CashOrCrashApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.configure(bg=colors["cream"])
+        # self.wm_attributes('-transparentcolor', self['bg'])
 
         self.geometry('2114x1321')
         # self.session: GameSession | None = None
@@ -36,6 +40,7 @@ class CashOrCrashApp(tk.Tk):
         # self.attributes("-fullscreen", True)
 
     def config_styles(self):
+        
         #---for basic styling
         style = ttk.Style(self)
         style.theme_use("clam")
@@ -67,19 +72,20 @@ class CashOrCrashApp(tk.Tk):
 
         # 🏖️bg image
         self.config_styles()
-        bgimg = Image.open("bg_img2.png")
-        bgimg = bgimg.resize((1800, 915))
+        bgimg = Image.open("./assets/bg_img.jpeg")
+        bgimg = bgimg.rotate(270)
+        bgimg = bgimg.resize((1500, 1505))
 
-        self.bg_img2 = ImageTk.PhotoImage(bgimg)
+        self.bg_img = ImageTk.PhotoImage(bgimg)
 
-        background_label = tk.Label(self, image=self.bg_img2)
+        background_label = tk.Label(self, image=self.bg_img)
 
         background_label.place(relwidth=1, relheight=1)
 
         # game logo ⚒️🛠️
 
-        logoimg = Image.open("game_logo.png")
-        logoimg = logoimg.resize((700, 350))
+        logoimg = Image.open("game_logo.png").convert("RGBA")
+        logoimg = logoimg.resize((800, 350))
 
         self.logo_img = ImageTk.PhotoImage(logoimg)
 
@@ -102,7 +108,7 @@ class CashOrCrashApp(tk.Tk):
             self,
             bg=colors["paper"],
             padx=35,
-            pady=30
+            pady=15
         )
 
         header.pack(side="top", fill='both')
@@ -125,7 +131,7 @@ class CashOrCrashApp(tk.Tk):
         self.order_label.pack(side="left", padx=50)
 
         # 🛠️⚒️ connect to db for current session's balance.
-        self.current_balance = 100
+        self.current_balance = 10
         bal = self.current_balance
 
         self.balance = tk.Label(
@@ -140,8 +146,8 @@ class CashOrCrashApp(tk.Tk):
         self.balance.pack(side="right")
 
         # Stand image
-        _stand = Image.open("stand_img.png")
-        _stand = _stand.resize((1700, 900))
+        _stand = Image.open('./assets/stand.png')
+        _stand = _stand.resize((1500, 780))
 
         self.stand_img = ImageTk.PhotoImage(_stand)
 
@@ -152,23 +158,31 @@ class CashOrCrashApp(tk.Tk):
         # Ingredient selection
         self.selected_ingredients = []
 
-        ingredients = ["mango","milk","ice","lemon","sugar","water","tea"]
+        ingredients = ["watermelon","milk","ice","lemon","sugar","water","orange", "mint"]
+        ingredients_pics = ['./assets/watermelon.png','./assets/milk.png','./assets/ice.png','./assets/lemon.png','./assets/sugar.png','./assets/water.png','./assets/orange.png', './assets/mint.png']
 
-        ingredient_frame = tk.Frame(self,bg=colors["cream"])
-
-        ingredient_frame.place(relx=0.5,rely=0.88,anchor="center")
-
+        ingredients = ["watermelon", "ice", "lemon", "sugar", "orange", "mint"]
+        self.ingredient_images = {}
         self.ingredient_buttons = {}
 
         for ingredient in ingredients:
-            button = tk.Button(
-                ingredient_frame,text=ingredient.title(),
-                font=("retro_font", 12, "bold"),
-                bg=colors["yellow"],fg=colors["brown"],
-                padx=12,pady=6,
-                command=lambda item=ingredient: self.select_ingredient(item))
+            image = Image.open(f"./assets/{ingredient}.png")
+            #thumbnail to maintain the size ratio
+            image.thumbnail((230, 230))
+            self.ingredient_images[ingredient] = ImageTk.PhotoImage(image)
 
-            button.pack(side="left", padx=3)
+            button = tk.Button(
+                self,
+                image=self.ingredient_images[ingredient],
+                # bg=colors["yellow"],
+                bg=colors["brown"],
+                height = 100,
+                width= 140,
+                padx=0,
+                pady=0,
+                relief = "flat",
+                command=lambda item=ingredient: self.select_ingredient(item),
+            )
             self.ingredient_buttons[ingredient] = button
 
             check_button = tk.Button(
@@ -186,17 +200,61 @@ class CashOrCrashApp(tk.Tk):
             end_day_button.place(relx=0.85,rely=0.95,anchor="center")
 
             self.result_label = tk.Label(self,text="",
-            background=colors["cream"],foreground=colors["brown"],
+            background=colors["brown_dark"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
 
             self.result_label.place(relx=0.5,rely=0.78,anchor="center")
+
+        self.ingredient_buttons['watermelon'].place(x = 110, y = 580)
+        self.ingredient_buttons['orange'].place(x = 315, y= 580)
+        self.ingredient_buttons['lemon'].place(x = 515, y = 580)
+        self.ingredient_buttons['mint'].place(x = 110, y = 710)
+        self.ingredient_buttons['ice'].place(x = 315, y = 710)
+        self.ingredient_buttons['sugar'].place(x = 515, y = 710)
+
+        image = Image.open(f"./assets/milk.png")
+        image.thumbnail((230, 230))
+        self.ingredient_images["milk"] = ImageTk.PhotoImage(image)
+        milk_button = tk.Button(
+            self,
+            image=self.ingredient_images["milk"],
+            # bg=colors["yellow"],
+            bg=colors["brown_dark"],
+            height = 130,
+            width= 100,
+            padx=0,
+            pady=0,
+            relief = "flat",
+            command=lambda item="milk": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["milk"] = milk_button
+        self.ingredient_buttons['milk'].place(x = 0, y = 550)
+
+        image = Image.open(f"./assets/water.png")
+        image.thumbnail((230, 230))
+        self.ingredient_images["water"] = ImageTk.PhotoImage(image)
+        water_button = tk.Button(
+            self,
+            image=self.ingredient_images["water"],
+            # bg=colors["yellow"],
+            bg=colors["brown_dark"],
+            height = 130,
+            width= 100,
+            padx=0,
+            pady=0,
+            relief = "flat",
+            command=lambda item="water": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["water"] = water_button
+        self.ingredient_buttons['water'].place(x = 0, y = 700)
+
 
     def select_ingredient(self, ingredient):
         if ingredient not in self.selected_ingredients:
             self.selected_ingredients.append(ingredient)
             print("Selected:", self.selected_ingredients)
 
-            self.ingredient_buttons[ingredient].config(bg=colors["green"])
+            self.ingredient_buttons[ingredient].config(bg=colors["muted"])
 
     # checks if the selected ingredients match the recipe for the current order and updates the balance accordingly.
     def check_current_order(self):
@@ -221,9 +279,34 @@ class CashOrCrashApp(tk.Tk):
         print(result_text)
         print("Current balance:", self.current_balance)
 
+        if self.current_balance<0:
+            self.show_game_over()
+        else:
         # Wait 1 second, then start the next order
-        self.after(1000, self.start_next_order)
+            self.after(1000, self.start_next_order)
 
+    def show_game_over(self):
+        # Clear the window
+        self.clear_windows()
+
+        # Load and display a "Game Over" image
+        gameover_img = Image.open("./assets/gameover.png").resize((1000, 600))
+        self.gameover_img = ImageTk.PhotoImage(gameover_img)
+
+        gameover_label = tk.Label(self, image=self.gameover_img, bg=colors["cream"])
+        gameover_label.pack(expand=True)
+        self.configure(bg = colors["yellow_light"])
+
+        # Optional: add a restart button
+        restart_btn = ttk.Button(
+            self,
+            text="RESTART",
+            style="Coral.TButton",
+            command=self.intro
+        )
+        restart_btn.pack(pady=20)
+
+        
     # function to run in a loop
     def start_next_order(self):
         # Generate a new customer order
@@ -237,24 +320,79 @@ class CashOrCrashApp(tk.Tk):
 
         # Reset ingredient buttons to yellow
         for button in self.ingredient_buttons.values():
-            button.config(bg=colors["yellow"])
+            button.config(bg=colors["brown"])
 
         # Clear previous result
         self.result_label.config(text="")
 
         print("Next order:", self.current_order)
 
+    # def finish_day(self):
+    #     final_balance = end_day(self.current_balance)
+
+    #     # Update balance
+    #     self.current_balance = final_balance
+
+    #     self.balance.config(text=f"BALANCE: ${self.current_balance}")
+
+    #     print("End of day!")
+    #     print("Rent: $30")
+    #     print("Final balance:", self.current_balance)
+
     def finish_day(self):
         final_balance = end_day(self.current_balance)
 
         # Update balance
         self.current_balance = final_balance
-
         self.balance.config(text=f"BALANCE: ${self.current_balance}")
+
+        # Create popup window
+        popup = tk.Toplevel(self)
+        popup.title("End of Day Summary")
+        popup.configure(bg=colors["cream"])
+        popup.geometry("400x250")
+
+        # Heading
+        tk.Label(
+            popup,
+            text="End of Day Report",
+            font=("retro_font", 18, "bold"),
+            bg=colors["cream"],
+            fg=colors["coral"]
+        ).pack(pady=15)
+
+        # Rent and balance info
+        tk.Label(
+            popup,
+            text="Rent: $30",
+            font=("retro_font", 14),
+            bg=colors["cream"],
+            fg=colors["brown"]
+        ).pack(pady=5)
+
+        tk.Label(
+            popup,
+            text=f"Final Balance: ${self.current_balance}",
+            font=("retro_font", 14, "bold"),
+            bg=colors["cream"],
+            fg=colors["green"] if self.current_balance > 0 else colors["coral"]
+        ).pack(pady=5)
+
+        # Close button
+        tk.Button(
+            popup,
+            text="OK",
+            font=("retro_font", 12, "bold"),
+            bg=colors["coral"],
+            fg="white",
+            command=popup.destroy
+        ).pack(pady=20)
 
         print("End of day!")
         print("Rent: $30")
         print("Final balance:", self.current_balance)
+
+        
 
     def draw_intro():
         pass

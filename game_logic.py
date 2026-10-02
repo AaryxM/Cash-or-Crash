@@ -2,9 +2,16 @@ import random
 
 # --- Recipes Dictionary 
 recipes = {
-    "Mango Smoothie": ["mango", "milk", "ice"],
+    "Citrus Harmony": ["orange", "lemon", "sugar", "mint"],
+    "Sweet Sunrise" : ["orange", "watermelon", "sugar"],
+    "Lemon Spark" : ["lemon", "sugar", "mint", "ice"],
+    "Citrus Burst" : ["orange", "lemon", "ice", "mint"],
+    "Mint Whisper" : ["mint", "water", "sugar", "ice"],
+    "Orange Cream" : ["orange", "milk", "ice"],
+    "Lemon Cream" : ["lemon", "milk", "ice"],
+    "Cold water" : ["water", "ice"],
+    "Orange Splash" : ["orange", "ice", "water"],
     "Lemonade": ["lemon", "sugar", "water"],
-    "Iced Tea": ["tea", "ice", "lemon"]
 }
 
 # --- Generate Random Order
@@ -14,7 +21,7 @@ def get_random_order():
 
 # --- Check Correctness ---
 def check_order(drink, chosen_ingredients):
-    """Compare chosen ingredients with recipe."""
+    # Compare chosen ingredients with recipe.
     return set(recipes[drink]) == set(chosen_ingredients)
 
 # --- Update Balance ---
