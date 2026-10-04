@@ -10,6 +10,7 @@ from db import (
     update_player,
     start_session,
     end_session,
+    get_high_scores,
 )
 
 from game_logic import (
@@ -18,6 +19,7 @@ from game_logic import (
     update_balance,
     end_day,
     get_summary,
+    calculate_score,
     recipes
 )
 
@@ -66,13 +68,49 @@ class CashOrCrashApp(tk.Tk):
         if not self.game_active:
             return
         self.game_active = False
-        score = get_summary(self.orders)["correct_orders"] * 10
+        score = calculate_score(self.orders)
         update_player(self.player_id, self.current_balance, score)
         end_session(self.session_id, self.days, score, self.current_balance)
 
     def on_close(self):
         self.save_progress()
         self.destroy()
+
+    # --- DB: popup with the top 5 scores (read from the players table)
+    def show_high_scores(self):
+        popup = tk.Toplevel(self)
+        popup.title("High Scores")
+        popup.configure(bg=colors["cream"])
+        popup.geometry("420x360")
+
+        tk.Label(
+            popup,
+            text="HIGH SCORES",
+            font=("retro_font", 18, "bold"),
+            bg=colors["cream"],
+            fg=colors["coral"]
+        ).pack(pady=15)
+
+        scores = get_high_scores(5)
+        if not scores:
+            tk.Label(popup, text="No scores yet - be the first!",
+                     font=("retro_font", 12), bg=colors["cream"],
+                     fg=colors["brown_dark"]).pack(pady=10)
+        for rank, (name, balance, score) in enumerate(scores, start=1):
+            tk.Label(
+                popup,
+                text=f"{rank}.  {name}   -   {score} pts   (${balance})",
+                font=("retro_font", 13),
+                bg=colors["cream"],
+                fg=colors["brown_dark"]
+            ).pack(pady=3)
+
+        tk.Button(
+            popup, text="CLOSE",
+            font=("retro_font", 12, "bold"),
+            bg=colors["coral"], fg="white",
+            command=popup.destroy
+        ).pack(pady=20)
 
     def config_styles(self):
         
@@ -151,6 +189,15 @@ class CashOrCrashApp(tk.Tk):
             command=self.start_new_game      # was self.show_game
         )
         start_btn.pack(anchor='s')
+
+        # --- DB: opens the high score list
+        tk.Button(
+            self, text="HIGH SCORES",
+            font=("retro_font", 12, "bold"),
+            bg=colors["brown_dark"], fg="white",
+            padx=20, pady=8,
+            command=self.show_high_scores
+        ).pack(pady=15)
 
     # --- DB: called when START is pressed - creates the player + session rows
     def start_new_game(self):
@@ -373,6 +420,15 @@ class CashOrCrashApp(tk.Tk):
         )
         restart_btn.pack(pady=20)
 
+        # --- DB: the player can see how they ranked
+        tk.Button(
+            self, text="HIGH SCORES",
+            font=("retro_font", 12, "bold"),
+            bg=colors["brown_dark"], fg="white",
+            padx=20, pady=8,
+            command=self.show_high_scores
+        ).pack(pady=5)
+
         
     # function to run in a loop
     def start_next_order(self):
@@ -409,7 +465,7 @@ class CashOrCrashApp(tk.Tk):
     def finish_day(self):
         final_balance = end_day(self.current_balance)
         if final_balance >= 0:
-            self.days += 1          # --- DB: counted in game_sessions.days_survived
+            self.days += 1      # --- DB: only a day that was survived counts in game_sessions.days_survived
 
         # Update balance
         self.current_balance = final_balance

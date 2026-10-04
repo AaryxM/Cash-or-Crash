@@ -40,3 +40,46 @@ cash_or_crash/
 │── game.db              # SQLite database file
 │── README.md            # Project documentation
 \\\
+## 🗄️ Database (SQLite)
+
+The game stores its data in `game.db`, managed by `db.py`. The tables are created
+automatically the first time the game starts, so no setup is needed.
+
+### Tables
+
+| Table | Purpose | Main columns |
+|-------|---------|--------------|
+| `players` | One row per player run | `id` (PK), `name`, `balance`, `score` |
+| `game_sessions` | One row per play-through | `id` (PK), `player_id` (FK), `days_survived`, `final_score`, `final_balance`, `started_at`, `ended_at` |
+| `orders` | Every customer order served | `id` (PK), `drink_name`, `success`, `timestamp`, `player_id` (FK), `session_id` (FK) |
+| `drinks` | The drinks menu and recipes | `id` (PK), `name` (unique), `price`, `ingredients` |
+
+**Relationships:** a player has many sessions, and a session has many orders
+(`game_sessions.player_id → players.id`, `orders.player_id → players.id`,
+`orders.session_id → game_sessions.id`).
+
+### How the game uses it
+
+1. **Launch:** `init_db()` creates the tables and `seed_drinks()` fills the menu from the recipes.
+2. **START:** the player's name is saved (`save_player`) and a session begins (`start_session`).
+3. **CHECK ORDER:** each order is saved with its result (`save_order`).
+4. **Game over / closing the window:** the final balance and score are saved (`update_player`, `end_session`).
+5. **HIGH SCORES:** the top 5 players are read with `get_high_scores`.
+
+### Useful queries
+
+```sql
+-- Top 5 scores
+SELECT name, score FROM players ORDER BY score DESC LIMIT 5;
+
+-- How often each drink was ordered and made correctly
+SELECT drink_name, COUNT(*) AS ordered, SUM(success) AS correct
+FROM orders GROUP BY drink_name;
+
+-- Orders per player
+SELECT p.name, COUNT(o.id) AS orders
+FROM players p JOIN orders o ON o.player_id = p.id
+GROUP BY p.name;
+```
+
+Open `game.db` with [DB Browser for SQLite](https://sqlitebrowser.org/) to look at the data.

@@ -52,6 +52,13 @@ def get_summary(orders):
         "wrong_orders": wrong
     }
 
+# --- Score (NEW) ---
+POINTS_PER_CORRECT = 10
+
+def calculate_score(orders):
+    """Score = points for every correct order (same list format as get_summary)."""
+    return sum(1 for o in orders if o["success"]) * POINTS_PER_CORRECT
+
 #temporary 
 if __name__ == "__main__":
     drink = get_random_order()
