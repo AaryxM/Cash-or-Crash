@@ -127,9 +127,9 @@ class CashOrCrashApp(tk.Tk):
         self.orders = []
 
         self.customer_images = [
-    "assets/customer/customer1.png",
-    "assets/customer/customer2.png",
-    "assets/customer/customer3.png"]
+    "assets/customer/customer1_1.png",
+    "assets/customer/customer2_2.png",
+    "assets/customer/customer3_3.png"]
 
         self.current_customer = None
         self.customer_img = None
@@ -137,6 +137,7 @@ class CashOrCrashApp(tk.Tk):
         self.order_label = tk.Label(header,text=f"CUSTOMER ORDER: {self.current_order}",
             background=colors["paper"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
+        
         self.order_label.pack(side="left", padx=50)
 
         # 🛠️⚒️ connect to db for current session's balance.
@@ -183,6 +184,10 @@ class CashOrCrashApp(tk.Tk):
         stand_label = tk.Label(self,image=self.stand_img,background=colors["sky"])
 
         stand_label.pack(side="top")
+        # Drink display (blank spot on the counter)
+        self.drink_label = tk.Label(self, bg="#e7ccb0", bd=0) 
+        self.drink_label.place(x=950, y=600)   
+        self.drink_img = None
 
         # Customer
         self.customer_label = tk.Label(
@@ -192,7 +197,7 @@ class CashOrCrashApp(tk.Tk):
         )
 
         self.customer_label.place(
-            relx=0.72,
+            relx=0.62,
             rely=0.44,
             anchor="center"
         )
@@ -203,19 +208,20 @@ class CashOrCrashApp(tk.Tk):
         self.order_popup = tk.Label(
             self,
             text=f"I'd like a\n{self.current_order}!",
-            background=colors["paper"],
+            background="#ffe8df",
             foreground=colors["brown"],
             font=("retro_font", 14, "bold"),
             padx=20,
             pady=12,
-            bd=3,
+            bd=0,
             relief="solid",
             justify="center")
+        
         self.order_popup.place(
-    relx=0.72,
-    rely=0.28,
-    anchor="center"
-)
+            relx=0.55,
+            rely=0.37,
+            anchor="center"
+        )
 
         # Ingredient selection
         self.selected_ingredients = []
@@ -309,6 +315,20 @@ class CashOrCrashApp(tk.Tk):
         )
         self.ingredient_buttons["water"] = water_button
         self.ingredient_buttons['water'].place(x = 0, y = 700)
+        
+    def show_drink(self, drink_name):
+        # file name like assets/drinks/lemonade.png
+        filename = drink_name.lower().replace(" ", "_")
+        img = Image.open(f"./assets/drinks/{filename}.png").convert("RGBA")
+        img.thumbnail((200, 200))   # keeps aspect ratio
+
+        # keep a reference on self or Tkinter will garbage-collect the image
+        self.drink_img = ImageTk.PhotoImage(img)
+        self.drink_label.config(image=self.drink_img)
+
+    def clear_drink(self):
+        self.drink_label.config(image="")
+        self.drink_img = None
 
     def show_customer(self):
         # Pick a random customer
@@ -318,7 +338,7 @@ class CashOrCrashApp(tk.Tk):
         customer = Image.open(self.current_customer)
 
         # Resize customer
-        customer = customer.resize((360, 260))
+        customer = customer.resize((460, 295))
 
         self.customer_img = ImageTk.PhotoImage(customer)
 
@@ -352,6 +372,7 @@ class CashOrCrashApp(tk.Tk):
         if success:
             result_text = "✓ CORRECT ORDER! +$10"
             result_color = colors["green"]
+            self.show_drink(self.current_order)
         else:
             result_text = "✗ WRONG ORDER! -$5"
             result_color = colors["coral"]
@@ -418,7 +439,7 @@ class CashOrCrashApp(tk.Tk):
 
         # Clear previous result
         self.result_label.config(text="")
-
+        self.clear_drink()
         print("Next order:", self.current_order)
 
     def finish_day(self):
