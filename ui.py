@@ -1,3 +1,4 @@
+import random
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -125,6 +126,14 @@ class CashOrCrashApp(tk.Tk):
         self.current_order = get_random_order()
         self.orders = []
 
+        self.customer_images = [
+    "assets/customer/customer1.png",
+    "assets/customer/customer2.png",
+    "assets/customer/customer3.png"]
+
+        self.current_customer = None
+        self.customer_img = None
+
         self.order_label = tk.Label(header,text=f"CUSTOMER ORDER: {self.current_order}",
             background=colors["paper"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
@@ -174,6 +183,39 @@ class CashOrCrashApp(tk.Tk):
         stand_label = tk.Label(self,image=self.stand_img,background=colors["sky"])
 
         stand_label.pack(side="top")
+
+        # Customer
+        self.customer_label = tk.Label(
+            self,
+            background=colors["sky"],
+            bd=0
+        )
+
+        self.customer_label.place(
+            relx=0.72,
+            rely=0.44,
+            anchor="center"
+        )
+
+        self.show_customer()
+
+        # Customer order popup
+        self.order_popup = tk.Label(
+            self,
+            text=f"I'd like a\n{self.current_order}!",
+            background=colors["paper"],
+            foreground=colors["brown"],
+            font=("retro_font", 14, "bold"),
+            padx=20,
+            pady=12,
+            bd=3,
+            relief="solid",
+            justify="center")
+        self.order_popup.place(
+    relx=0.72,
+    rely=0.28,
+    anchor="center"
+)
 
         # Ingredient selection
         self.selected_ingredients = []
@@ -268,6 +310,21 @@ class CashOrCrashApp(tk.Tk):
         self.ingredient_buttons["water"] = water_button
         self.ingredient_buttons['water'].place(x = 0, y = 700)
 
+    def show_customer(self):
+        # Pick a random customer
+        self.current_customer = random.choice(self.customer_images)
+
+        # Load customer image
+        customer = Image.open(self.current_customer)
+
+        # Resize customer
+        customer = customer.resize((360, 260))
+
+        self.customer_img = ImageTk.PhotoImage(customer)
+
+        # Display customer
+        self.customer_label.config(image=self.customer_img)
+
     def select_ingredient(self, ingredient):
     # If ingredient is already selected, unselect it
         if ingredient in self.selected_ingredients:
@@ -334,35 +391,35 @@ class CashOrCrashApp(tk.Tk):
         
     # function to run in a loop
     def start_next_order(self):
-        # Generate a new customer order
+
+        # Generate new order
         self.current_order = get_random_order()
 
-        # Update customer order on screen
-        self.order_label.config(text=f"CUSTOMER ORDER: {self.current_order}")
+        # Pick a new customer
+        self.show_customer()
+
+        # Update customer order popup
+        self.order_popup.config(
+            text=f"I'd like a\n{self.current_order}!"
+        )
+
+        # Update existing order label
+        self.order_label.config(
+            text=f"CUSTOMER ORDER: {self.current_order}"
+        )
 
         # Reset selected ingredients
         self.selected_ingredients = []
 
-        # Reset ingredient buttons to yellow
         for button in self.ingredient_buttons.values():
-            button.config(bg=colors["brown"])
+            button.config(
+                bg=colors["brown"]
+            )
 
         # Clear previous result
         self.result_label.config(text="")
 
         print("Next order:", self.current_order)
-
-    # def finish_day(self):
-    #     final_balance = end_day(self.current_balance)
-
-    #     # Update balance
-    #     self.current_balance = final_balance
-
-    #     self.balance.config(text=f"BALANCE: ${self.current_balance}")
-
-    #     print("End of day!")
-    #     print("Rent: $30")
-    #     print("Final balance:", self.current_balance)
 
     def finish_day(self):
         final_balance = end_day(self.current_balance)
