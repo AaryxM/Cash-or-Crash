@@ -142,8 +142,28 @@ class CashOrCrashApp(tk.Tk):
             font=("retro_font", 18, "bold"),
             justify="left"
         )
-
         self.balance.pack(side="right")
+
+        # Load pixel-art menu icon
+        _menu = Image.open("assets/menu_icon.png")
+        _menu = _menu.resize((70, 50))
+        self.menu_img = ImageTk.PhotoImage(_menu)
+
+        menu_icon = tk.Button(
+            header,
+            image=self.menu_img,
+            bg=colors["paper"],
+            bd=0,
+            relief="flat",
+            cursor="hand2",
+            activebackground=colors["paper"],
+            command=self.show_menu_book
+        )
+
+        menu_icon.pack(
+            side="right",
+            padx=(30, 5)
+        )
 
         # Stand image
         _stand = Image.open('./assets/stand.png')
@@ -204,7 +224,7 @@ class CashOrCrashApp(tk.Tk):
             font=("retro_font", 18, "bold"))
 
             self.result_label.place(relx=0.5,rely=0.78,anchor="center")
-
+           
         self.ingredient_buttons['watermelon'].place(x = 110, y = 580)
         self.ingredient_buttons['orange'].place(x = 315, y= 580)
         self.ingredient_buttons['lemon'].place(x = 515, y = 580)
@@ -248,13 +268,18 @@ class CashOrCrashApp(tk.Tk):
         self.ingredient_buttons["water"] = water_button
         self.ingredient_buttons['water'].place(x = 0, y = 700)
 
-
     def select_ingredient(self, ingredient):
-        if ingredient not in self.selected_ingredients:
-            self.selected_ingredients.append(ingredient)
-            print("Selected:", self.selected_ingredients)
+    # If ingredient is already selected, unselect it
+        if ingredient in self.selected_ingredients:
+            self.selected_ingredients.remove(ingredient)
 
-            self.ingredient_buttons[ingredient].config(bg=colors["muted"])
+            self.ingredient_buttons[ingredient].config( bg=colors["brown"])
+        # Otherwise, select the ingredient
+        else:
+            self.selected_ingredients.append(ingredient)
+
+            self.ingredient_buttons[ingredient].config( bg=colors["muted"] )
+        print("Selected:", self.selected_ingredients)
 
     # checks if the selected ingredients match the recipe for the current order and updates the balance accordingly.
     def check_current_order(self):
@@ -392,7 +417,118 @@ class CashOrCrashApp(tk.Tk):
         print("Rent: $30")
         print("Final balance:", self.current_balance)
 
-        
+
+    def show_menu_book(self):
+        menu_window = tk.Toplevel(self)
+
+        menu_window.title("Recipe Book")
+        menu_window.configure(bg=colors["brown"])
+
+        # Keep recipe book above the game
+        menu_window.transient(self)
+        menu_window.grab_set()
+
+        # Recipe book size
+        book_width = 1000
+        book_height = 667
+
+        # Load recipe book image
+        book = Image.open("assets/recipe_book.png")
+        book = book.resize((book_width, book_height))
+        self.recipe_book_img = ImageTk.PhotoImage(book)
+
+        # Canvas for image + recipe text
+        canvas = tk.Canvas(
+            menu_window,
+            width=book_width,
+            height=book_height,
+            bg=colors["brown"],
+            highlightthickness=0
+        )
+
+        canvas.pack()
+
+        # Display book
+        canvas.create_image(
+            0,
+            0,
+            image=self.recipe_book_img,
+            anchor="nw"
+        )
+
+        # Split recipes between the two pages
+        recipe_items = list(recipes.items())
+
+        left_recipes = recipe_items[:5]
+        right_recipes = recipe_items[5:10]
+
+        # Y positions of the five recipe boxes
+        y_positions = [220, 340, 465, 590, 715]
+
+        # Because the image is resized from 1536x1024 to 1000x667
+        scale_x = book_width / 1536
+        scale_y = book_height / 1024
+
+        # Convert original image coordinates to displayed coordinates
+        y_positions = [
+            int(y * scale_y)
+            for y in [220, 340, 465, 590, 725]
+        ]
+
+        # Recipe text function
+        def draw_recipe(recipe_list, x):
+            for i, (drink, ingredients) in enumerate(recipe_list):
+
+                y = y_positions[i]
+
+                # Drink name
+                canvas.create_text(
+                    x,
+                    y,
+                    text=drink,
+                    anchor="w",
+                    fill=colors["brown"],
+                    font=("retro_font", 13, "bold")
+                )
+
+                # Ingredients
+                ingredient_text = " + ".join(
+                    ingredient.title()
+                    for ingredient in ingredients
+                )
+
+                canvas.create_text(
+                    x,
+                    y + 24,
+                    text=ingredient_text,
+                    anchor="w",
+                    fill=colors["muted"],
+                    font=("retro_font", 10)
+                )
+
+        # Draw left page recipes
+        draw_recipe(
+            left_recipes,
+            int(395 * scale_x)
+        )
+
+        # Draw right page recipes
+        draw_recipe(
+            right_recipes,
+            int(875 * scale_x)
+        )
+
+        # Close button
+        close_button = tk.Button(
+            menu_window,
+            text="CLOSE",
+            font=("retro_font", 12, "bold"),
+            bg=colors["coral"],
+            fg="white",
+            padx=25,
+            pady=7,
+            command=menu_window.destroy)
+        close_button.pack(pady=10)
 
     def draw_intro():
         pass
