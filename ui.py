@@ -166,8 +166,12 @@ class CashOrCrashApp(tk.Tk):
         tk.Button(
             card, text="LOGIN",
             font=("retro_font", 12, "bold"),
-            bg="#E37162", fg="white",
-            width=20, pady=8,
+            bg="#E37162",
+            fg="white",
+            activebackground=colors["coral_dark"],
+            activeforeground="white",
+            width=20, 
+            pady=8,
             command=self.login_user
         ).pack(pady=5)
 
@@ -463,9 +467,16 @@ class CashOrCrashApp(tk.Tk):
             self.ingredient_buttons[ingredient] = button
 
             check_button = tk.Button(
-            self,text="CHECK ORDER",font=("retro_font", 14, "bold"),
-            bg=colors["coral"],fg="white",
-            padx=25,pady=10,command=self.check_current_order)
+            self,
+            text="CHECK ORDER",
+            font=("retro_font", 14, "bold"),
+            bg=colors["coral"],
+            activebackground= colors["coral_dark"],
+            activeforeground="white",
+            fg="white",
+            padx=25,
+            pady=10,
+            command=self.check_current_order)
 
             check_button.place(relx=0.5,rely=0.95,anchor="center")
 
@@ -680,6 +691,10 @@ class CashOrCrashApp(tk.Tk):
         self.clear_drink()
         print("Next order:", self.current_order)
 
+    # def sesh_done():
+    #             popup.destroy
+    #             intro(self)
+
     def finish_day(self):
         final_balance = end_day(self.current_balance)
 
@@ -719,6 +734,7 @@ class CashOrCrashApp(tk.Tk):
             fg=colors["green"] if self.current_balance > 0 else colors["coral"]
         ).pack(pady=5)
 
+       
         # Close button
         tk.Button(
             popup,
@@ -726,7 +742,7 @@ class CashOrCrashApp(tk.Tk):
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
             fg="white",
-            command=popup.destroy
+            command=lambda : [popup.destroy, self.intro()]
         ).pack(pady=20)
 
         print("End of day!")
