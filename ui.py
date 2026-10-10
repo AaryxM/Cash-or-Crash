@@ -1,8 +1,16 @@
 import random
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk,messagebox
 from PIL import Image, ImageTk
-from db import save_order
+from db import (
+    save_order,
+    register_user,
+    authenticate_user,
+    get_player,
+    start_session,
+    finish_session,
+    save_player
+)
 
 from game_logic import (
     get_random_order,
@@ -39,6 +47,10 @@ class CashOrCrashApp(tk.Tk):
         # self.session: GameSession | None = None
 
         # self.attributes("-fullscreen", True)
+        self.user_id = None
+        self.player_id = None
+        self.session_id = None
+        self.username = None
 
     def config_styles(self):
         
@@ -101,6 +113,202 @@ class CashOrCrashApp(tk.Tk):
         )
         start_btn.pack(anchor='s')
 
+    def login_screen(self):
+        self.clear_windows()
+        self.config_styles()
+
+        bgimg = Image.open("./assets/bg_img.jpeg")
+        bgimg = bgimg.rotate(270)
+        bgimg = bgimg.resize((1500, 1505))
+
+        self.login_bg_img = ImageTk.PhotoImage(bgimg)
+        tk.Label(self, image=self.login_bg_img).place(
+            relwidth=1, relheight=1
+        )
+
+        card = tk.Frame(self, bg="#FFFDF7", padx=45, pady=30)
+        card.place(relx=0.5, rely=0.5, anchor="center")
+
+        tk.Label(
+            card, text="CASH OR CRASH",
+            font=("retro_font", 25, "bold"),
+            bg="#FFFDF7", fg="#E37162"
+        ).pack(pady=(0, 8))
+
+        tk.Label(
+            card, text="Welcome back, juice maker!",
+            font=("retro_font", 12),
+            bg="#FFFDF7", fg="#604432"
+        ).pack(pady=(0, 20))
+
+        tk.Label(
+            card, text="Username",
+            font=("retro_font", 12),
+            bg="#FFFDF7", fg="#604432"
+        ).pack(anchor="w")
+
+        self.username_entry = tk.Entry(
+            card, font=("Arial", 13), width=28
+        )
+        self.username_entry.pack(pady=(5, 15), ipady=5)
+
+        tk.Label(
+            card, text="Password",
+            font=("retro_font", 12),
+            bg="#FFFDF7", fg="#604432"
+        ).pack(anchor="w")
+
+        self.password_entry = tk.Entry(
+            card, font=("Arial", 13), width=28, show="*"
+        )
+        self.password_entry.pack(pady=(5, 20), ipady=5)
+
+        tk.Button(
+            card, text="LOGIN",
+            font=("retro_font", 12, "bold"),
+            bg="#E37162", fg="white",
+            width=20, pady=8,
+            command=self.login_user
+        ).pack(pady=5)
+
+        tk.Button(
+            card, text="Create a new account",
+            font=("retro_font", 10),
+            bg="#FFFDF7", fg="#604432",
+            relief="flat",
+            command=self.registration_screen
+        ).pack(pady=(12, 0))
+
+        self.username_entry.focus_set()
+
+    def login_user(self):
+        username = self.username_entry.get().strip()
+        password = self.password_entry.get()
+
+        if not username or not password:
+            messagebox.showwarning(
+                "Missing details",
+                "Please enter your username and password."
+            )
+            return
+
+        user_id = authenticate_user(username, password)
+
+        if user_id is None:
+            messagebox.showerror(
+                "Login failed",
+                "Incorrect username or password."
+            )
+            return
+
+        player = get_player(user_id)
+
+        if player is None:
+            messagebox.showerror(
+                "Error",
+                "Player profile could not be found."
+            )
+            return
+
+        self.user_id = user_id
+        self.player_id = player[0]
+        self.username = player[1]
+
+        # Successful login opens the existing START screen.
+        self.intro()
+
+    def registration_screen(self):
+        self.clear_windows()
+        self.config_styles()
+
+        bgimg = Image.open("./assets/bg_img.jpeg")
+        bgimg = bgimg.rotate(270)
+        bgimg = bgimg.resize((1500, 1505))
+
+        self.register_bg_img = ImageTk.PhotoImage(bgimg)
+        tk.Label(self, image=self.register_bg_img).place(
+            relwidth=1, relheight=1
+        )
+
+        card = tk.Frame(self, bg="#FFFDF7", padx=45, pady=25)
+        card.place(relx=0.5, rely=0.5, anchor="center")
+
+        tk.Label(
+            card, text="JOIN THE JUICE STAND!",
+            font=("retro_font", 20, "bold"),
+            bg="#FFFDF7", fg="#E37162"
+        ).pack(pady=(0, 18))
+
+        tk.Label(
+            card, text="Choose a username",
+            font=("retro_font", 11),
+            bg="#FFFDF7", fg="#604432"
+        ).pack(anchor="w")
+
+        self.register_username_entry = tk.Entry(
+            card, font=("Arial", 13), width=28
+        )
+        self.register_username_entry.pack(pady=(5, 12), ipady=5)
+
+        tk.Label(
+            card, text="Choose a password (8+ characters)",
+            font=("retro_font", 11),
+            bg="#FFFDF7", fg="#604432"
+        ).pack(anchor="w")
+
+        self.register_password_entry = tk.Entry(
+            card, font=("Arial", 13), width=28, show="*"
+        )
+        self.register_password_entry.pack(pady=(5, 12), ipady=5)
+
+        tk.Label(
+            card, text="Confirm password",
+            font=("retro_font", 11),
+            bg="#FFFDF7", fg="#604432"
+        ).pack(anchor="w")
+
+        self.confirm_password_entry = tk.Entry(
+            card, font=("Arial", 13), width=28, show="*"
+        )
+        self.confirm_password_entry.pack(pady=(5, 18), ipady=5)
+
+        tk.Button(
+            card, text="REGISTER",
+            font=("retro_font", 12, "bold"),
+            bg="#E37162", fg="white",
+            width=20, pady=8,
+            command=self.register_new_user
+        ).pack(pady=5)
+
+        tk.Button(
+            card, text="Back to login",
+            font=("retro_font", 10),
+            bg="#FFFDF7", fg="#604432",
+            relief="flat",
+            command=self.login_screen
+        ).pack(pady=(10, 0))
+
+    def register_new_user(self):
+        username = self.register_username_entry.get().strip()
+        password = self.register_password_entry.get()
+        confirm = self.confirm_password_entry.get()
+
+        if password != confirm:
+            messagebox.showerror(
+                "Password mismatch",
+                "The passwords do not match."
+            )
+            return
+
+        success, message = register_user(username, password)
+
+        if success:
+            messagebox.showinfo("Registration", message)
+            self.login_screen()
+            self.username_entry.insert(0, username)
+        else:
+            messagebox.showerror("Registration failed", message)
+
     def show_game(self):
         self.clear_windows()
 
@@ -142,6 +350,7 @@ class CashOrCrashApp(tk.Tk):
 
         # 🛠️⚒️ connect to db for current session's balance.
         self.current_balance = 10
+        self.current_score = 0
         bal = self.current_balance
 
         self.balance = tk.Label(
@@ -360,13 +569,38 @@ class CashOrCrashApp(tk.Tk):
 
     # checks if the selected ingredients match the recipe for the current order and updates the balance accordingly.
     def check_current_order(self):
-        success = check_order(self.current_order,self.selected_ingredients)            
+        success = check_order(
+            self.current_order,
+            self.selected_ingredients
+        )
+
         save_order(self.current_order, success)
-        self.orders.append({"drink": self.current_order,"success": success})
+
+        self.orders.append({
+            "drink": self.current_order,
+            "success": success
+        })
 
         # Update balance
-        self.current_balance = update_balance(self.current_balance,success)
-        self.balance.config(text=f"BALANCE: ${self.current_balance}")
+        self.current_balance = update_balance(
+            self.current_balance, success
+        )
+        self.balance.config(
+            text=f"BALANCE: ${self.current_balance}"
+        )
+
+        # Update score for a correct order
+        if success:
+            self.current_score += 1
+
+        # Save the player's progress to the database
+        if self.user_id is not None:
+            save_player(
+                self.username,
+                self.current_balance,
+                self.current_score,
+                self.user_id
+            )
 
         # Show result
         if success:
@@ -377,15 +611,19 @@ class CashOrCrashApp(tk.Tk):
             result_text = "✗ WRONG ORDER! -$5"
             result_color = colors["coral"]
 
-        self.result_label.config(text=result_text,foreground=result_color)
+        self.result_label.config(
+            text=result_text,
+            foreground=result_color
+        )
 
         print(result_text)
         print("Current balance:", self.current_balance)
+        print("Current score:", self.current_score)
 
-        if self.current_balance<0:
+        if self.current_balance < 0:
             self.show_game_over()
         else:
-        # Wait 1 second, then start the next order
+            # Wait 1 second, then start the next order
             self.after(1000, self.start_next_order)
 
     def show_game_over(self):
@@ -614,6 +852,10 @@ class CashOrCrashApp(tk.Tk):
     def show_result():
         pass
 
-c = CashOrCrashApp()
-c.intro()
-c.mainloop()
+if __name__ == "__main__":
+    from db import init_db
+
+    init_db()
+    c = CashOrCrashApp()
+    c.intro()
+    c.mainloop()
