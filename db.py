@@ -2,6 +2,7 @@ import sqlite3
 import hashlib
 import secrets
 
+
 DB_NAME = "game.db"
 
 
