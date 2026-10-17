@@ -52,8 +52,22 @@ class CashOrCrashApp(tk.Tk):
         self.player_id = None
         self.session_id = None
         self.username = None
-        self.day_counter = 1
-        self.session_goal = 3        # first session requires 3 customers
+        self.day_counter = 1   # fallback if no player found
+
+        # load from DB if a user exists
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name, balance, score, day_counter FROM players LIMIT 1")
+            player = cursor.fetchone()
+            if player:
+                self.player_id = player[0]
+                self.username = player[1]
+                self.current_balance = player[2]
+                self.current_score = player[3]
+                self.day_counter = player[4]
+
+        self.session_goal = 3 + (self.day_counter - 1) * 2
+      # first session requires 3 customers
         self.customers_served = 0
 
     def config_styles(self):
@@ -236,6 +250,7 @@ class CashOrCrashApp(tk.Tk):
 
         # Score should always equal the balance
         self.current_score = self.current_balance
+        self.day_counter = player[4]
 
         # Keep the database score synchronized with the balance
         save_player(
@@ -406,7 +421,7 @@ class CashOrCrashApp(tk.Tk):
             background=colors["paper"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
         
-        self.order_label.pack(side="left", padx=50)
+        self.order_label.pack(side="left", padx=30)
 
         # Use the balance retrieved during login
         bal = self.current_balance
@@ -733,8 +748,8 @@ class CashOrCrashApp(tk.Tk):
         self.orders.append({"drink": self.current_order,"success": success})
 
         # Update balance
-        self.current_balance = update_balance(self.current_balance, success)
-        
+        self.current_balance = update_balance(self.current_balance, self.current_order, success)
+
         # Score always equals balance
         self.current_score = self.current_balance
 
@@ -755,17 +770,21 @@ class CashOrCrashApp(tk.Tk):
           #  self.current_score += 1
 
         # Show result
+      
         if success:
-            result_text = "✓ CORRECT ORDER! +$10"
+            price = recipes[self.current_order]["price"]
+            result_text = f"✓ CORRECT ORDER! +${price}"
             result_color = colors["green"]
             self.show_drink(self.current_order)
         else:
-            result_text = "✗ WRONG ORDER! -$5"
+            penalty = recipes[self.current_order]["price"] - recipes[self.current_order]["price"]*0.5   # or recipes[self.current_order]["penalty"] if you add per‑drink penalties
+            result_text = f"✗ WRONG ORDER! -${penalty}"
             result_color = colors["coral"]
 
         self.result_label.config(
             text=result_text,
-            foreground=result_color
+            foreground=result_color,
+            background=colors["cream"]
         )
 
         # --- NEW: update progress bar

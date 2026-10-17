@@ -1,17 +1,43 @@
 import random
 
 # --- Recipes Dictionary 
+# recipes = {
+#     "Citrus Harmony": ["orange", "lemon", "sugar", "mint"],
+#     "Sweet Sunrise" : ["orange", "watermelon", "sugar"],
+#     "Lemon Spark" : ["lemon", "sugar", "mint", "ice"],
+#     "Citrus Burst" : ["orange", "lemon", "ice", "mint"],
+#     "Mint Whisper" : ["mint", "water", "sugar", "ice"],
+#     "Orange Cream" : ["orange", "milk", "ice"],
+#     "Lemon Cream" : ["lemon", "milk", "ice"],
+#     "Cold water" : ["water", "ice"],
+#     "Orange Splash" : ["orange", "ice", "water"],
+#     "Lemonade": ["lemon", "sugar", "water"],
+# }
 recipes = {
-    "Citrus Harmony": ["orange", "lemon", "sugar", "mint"],
-    "Sweet Sunrise" : ["orange", "watermelon", "sugar"],
-    "Lemon Spark" : ["lemon", "sugar", "mint", "ice"],
-    "Citrus Burst" : ["orange", "lemon", "ice", "mint"],
-    "Mint Whisper" : ["mint", "water", "sugar", "ice"],
-    "Orange Cream" : ["orange", "milk", "ice"],
-    "Lemon Cream" : ["lemon", "milk", "ice"],
-    "Cold water" : ["water", "ice"],
-    "Orange Splash" : ["orange", "ice", "water"],
-    "Lemonade": ["lemon", "sugar", "water"],
+    "Citrus Harmony": {
+        "ingredients": ["orange", "lemon", "sugar", "mint"],
+        "price": 16
+    },
+    "Sweet Sunrise": {
+        "ingredients": ["orange", "watermelon", "sugar"],
+        "price": 12
+    },
+    "Lemon Spark": {
+        "ingredients": ["lemon", "sugar", "mint", "ice"],
+        "price": 16
+    },
+    "Orange Cream": {
+        "ingredients": ["orange", "milk", "ice"],
+        "price": 14
+    },
+    "Lemon Cream": {
+        "ingredients": ["lemon", "milk", "ice"],
+        "price": 14
+    },
+    "Cold Water": {
+        "ingredients": ["water", "ice"],
+        "price": 4
+    }
 }
 
 # --- Generate Random Order
@@ -19,18 +45,19 @@ def get_random_order():
     #Return a random drink name from recipes.
     return random.choice(list(recipes.keys()))
 
-# --- Check Correctness ---
+#Check if correct order
 def check_order(drink, chosen_ingredients):
-    # Compare chosen ingredients with recipe.
-    return set(recipes[drink]) == set(chosen_ingredients)
+    return set(recipes[drink]["ingredients"]) == set(chosen_ingredients)
 
-# --- Update Balance ---
-def update_balance(balance, success):
-    """Update balance based on correctness."""
+
+
+    
+def update_balance(balance, drink, success):
     if success:
-        return balance + 10   # earn coins
+        return balance + recipes[drink]["price"]
     else:
-        return balance - 5    # lose coins
+        return balance - recipes[drink]["price"] * 0.5   # penalty stays fixed, or make it per-drink too
+
 
 # --- End of Day Rent ---
 def end_day(balance, rent=30):

@@ -194,7 +194,7 @@ def get_player(user_id):
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT id, name, balance, score
+            SELECT id, name, balance, score, day_counter
             FROM players
             WHERE user_id = ?
         """, (user_id,))
