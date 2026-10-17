@@ -342,6 +342,12 @@ class CashOrCrashApp(tk.Tk):
     def show_game(self):
         self.clear_windows()
 
+        # Track menu window
+        self.menu_window = None
+
+        # Bind 'm' key to toggle menu
+        self.bind("<m>", self.toggle_menu)
+
         # headers with the current session details!
         header = tk.Frame(
             self,
@@ -441,7 +447,8 @@ class CashOrCrashApp(tk.Tk):
         stand_label.pack(side="top")
         # Drink display (blank spot on the counter)
         self.drink_label = tk.Label(self, bg="#e7ccb0", bd=0) 
-        self.drink_label.place(x=950, y=600)   
+        
+        self.drink_label.place(x=950, y=584)   
         self.drink_img = None
 
         # Customer
@@ -488,27 +495,155 @@ class CashOrCrashApp(tk.Tk):
         self.ingredient_images = {}
         self.ingredient_buttons = {}
 
-        for ingredient in ingredients:
-            image = Image.open(f"./assets/{ingredient}.png")
-            #thumbnail to maintain the size ratio
-            image.thumbnail((230, 230))
-            self.ingredient_images[ingredient] = ImageTk.PhotoImage(image)
+        # Orange button
+        orange_img = Image.open("./assets/orange.png").resize((200, 200))
+        self.ingredient_images["orange"] = ImageTk.PhotoImage(orange_img)
 
-            button = tk.Button(
-                self,
-                image=self.ingredient_images[ingredient],
-                # bg=colors["yellow"],
-                bg=colors["brown"],
-                height = 100,
-                width= 140,
-                padx=0,
-                pady=0,
-                relief = "flat",
-                command=lambda item=ingredient: self.select_ingredient(item),
-            )
-            self.ingredient_buttons[ingredient] = button
+        orange_button = tk.Button(
+            self,
+            image=self.ingredient_images["orange"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="orange": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["orange"] = orange_button
+        self.ingredient_buttons["orange"].place(x=315, y=585)
 
-            check_button = tk.Button(
+        # Lemon button
+        lemon_img = Image.open("./assets/lemon.png").resize((200, 200))
+        self.ingredient_images["lemon"] = ImageTk.PhotoImage(lemon_img)
+
+        lemon_button = tk.Button(
+            self,
+            image=self.ingredient_images["lemon"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="lemon": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["lemon"] = lemon_button
+        self.ingredient_buttons["lemon"].place(x=515, y=585)
+
+        # Ice button
+        ice_img = Image.open("./assets/ice.png").resize((100, 100))
+        self.ingredient_images["ice"] = ImageTk.PhotoImage(ice_img)
+
+        ice_button = tk.Button(
+            self,
+            image=self.ingredient_images["ice"],
+            bg=colors["brown"],
+            relief="flat",
+            command=lambda item="ice": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["ice"] = ice_button
+        self.ingredient_buttons["ice"].place(x=330, y=715)
+
+        # Sugar button
+        sugar_img = Image.open("./assets/sugar.png").resize((120, 120))
+        self.ingredient_images["sugar"] = ImageTk.PhotoImage(sugar_img)
+
+        sugar_button = tk.Button(
+            self,
+            image=self.ingredient_images["sugar"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="sugar": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["sugar"] = sugar_button
+        self.ingredient_buttons["sugar"].place(x = 520, y = 715)
+
+        # Mint button
+        mint_img = Image.open("./assets/mint.png").resize((200, 200))
+        self.ingredient_images["mint"] = ImageTk.PhotoImage(mint_img)
+
+        mint_button = tk.Button(
+            self,
+            image=self.ingredient_images["mint"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="mint": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["mint"] = mint_button
+        self.ingredient_buttons["mint"].place(x = 110, y = 715)
+
+        # watermelon button
+        watermelon_img = Image.open("./assets/watermelon.png").resize((200, 200))
+        self.ingredient_images["watermelon"] = ImageTk.PhotoImage(watermelon_img)
+
+        watermelon_button = tk.Button(
+            self,
+            image=self.ingredient_images["watermelon"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="watermelon": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["watermelon"] = watermelon_button
+        self.ingredient_buttons["watermelon"].place(x = 110, y = 585)
+
+        # milk button
+        milk_img = Image.open("./assets/milk.png").resize((200, 200))
+        self.ingredient_images["milk"] = ImageTk.PhotoImage(milk_img)
+
+        milk_button = tk.Button(
+            self,
+            image=self.ingredient_images["milk"],
+            bg=colors["brown_dark"],
+            relief="flat",
+            width = 80,
+            height = 110,
+            command=lambda item="milk": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["milk"] = milk_button
+        self.ingredient_buttons["milk"].place(x = 0, y = 550)
+
+        # wwater button
+        water_img = Image.open("./assets/water.png").resize((150, 150))
+        self.ingredient_images["water"] = ImageTk.PhotoImage(water_img)
+
+        water_button = tk.Button(
+            self,
+            image=self.ingredient_images["water"],
+            bg=colors["brown_dark"],
+            relief="flat",
+            width = 80,
+            height = 120,
+            command=lambda item="water": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["water"] = water_button
+        self.ingredient_buttons["water"].place(x = 0, y = 700)
+
+
+
+        # for ingredient in ingredients:
+        #     image = Image.open(f"./assets/{ingredient}.png")
+        #     #thumbnail to maintain the size ratio
+        #     image.thumbnail((230, 230))
+        #     self.ingredient_images[ingredient] = ImageTk.PhotoImage(image)
+
+        #     button = tk.Button(
+        #         self,
+        #         image=self.ingredient_images[ingredient],
+        #         # bg=colors["yellow"],
+        #         bg=colors["brown"],
+        #         height = 100,
+        #         width= 140,
+        #         padx=0,
+        #         pady=0,
+        #         relief = "flat",
+        #         command=lambda item=ingredient: self.select_ingredient(item),
+        #     )
+        #     self.ingredient_buttons[ingredient] = button
+
+        check_button = tk.Button(
             self,
             text="CHECK ORDER",
             font=("retro_font", 14, "bold"),
@@ -520,73 +655,32 @@ class CashOrCrashApp(tk.Tk):
             pady=10,
             command=self.check_current_order)
 
-            check_button.place(relx=0.5,rely=0.95,anchor="center")
+        check_button.place(relx=0.5,rely=0.95,anchor="center")
 
-            end_day_button = tk.Button(
+        end_day_button = tk.Button(
             self,text="END DAY",font=("retro_font", 12, "bold"),
             bg=colors["brown"],fg="white",
             padx=20,pady=8,command=self.finish_day)
 
-            end_day_button.place(relx=0.85,rely=0.95,anchor="center")
+        end_day_button.place(relx=0.85,rely=0.95,anchor="center")
 
-            self.result_label = tk.Label(self,text="",
+        self.result_label = tk.Label(self,text="",
             background=colors["brown_dark"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
 
-            self.result_label.place(relx=0.5,rely=0.78,anchor="center")
+        self.result_label.place(relx=0.5,rely=0.78,anchor="center")
            
-        self.ingredient_buttons['watermelon'].place(x = 110, y = 580)
-        self.ingredient_buttons['orange'].place(x = 315, y= 580)
-        self.ingredient_buttons['lemon'].place(x = 515, y = 580)
-        self.ingredient_buttons['mint'].place(x = 110, y = 710)
-        self.ingredient_buttons['ice'].place(x = 315, y = 710)
-        self.ingredient_buttons['sugar'].place(x = 515, y = 710)
-
-        image = Image.open(f"./assets/milk.png")
-        image.thumbnail((230, 230))
-        self.ingredient_images["milk"] = ImageTk.PhotoImage(image)
-        milk_button = tk.Button(
-            self,
-            image=self.ingredient_images["milk"],
-            # bg=colors["yellow"],
-            bg=colors["brown_dark"],
-            height = 130,
-            width= 100,
-            padx=0,
-            pady=0,
-            relief = "flat",
-            command=lambda item="milk": self.select_ingredient(item),
-        )
-        self.ingredient_buttons["milk"] = milk_button
-        self.ingredient_buttons['milk'].place(x = 0, y = 550)
-
-        image = Image.open(f"./assets/water.png")
-        image.thumbnail((230, 230))
-        self.ingredient_images["water"] = ImageTk.PhotoImage(image)
-        water_button = tk.Button(
-            self,
-            image=self.ingredient_images["water"],
-            # bg=colors["yellow"],
-            bg=colors["brown_dark"],
-            height = 130,
-            width= 100,
-            padx=0,
-            pady=0,
-            relief = "flat",
-            command=lambda item="water": self.select_ingredient(item),
-        )
-        self.ingredient_buttons["water"] = water_button
-        self.ingredient_buttons['water'].place(x = 0, y = 700)
         
     def show_drink(self, drink_name):
         # file name like assets/drinks/lemonade.png
         filename = drink_name.lower().replace(" ", "_")
-        img = Image.open(f"./assets/drinks/{filename}.png").convert("RGBA")
-        img.thumbnail((200, 200))   # keeps aspect ratio
+        img = Image.open(f"./assets/drinks/{filename}.png")
+        img = img.resize((225, 225), Image.Resampling.LANCZOS)
 
         # keep a reference on self or Tkinter will garbage-collect the image
         self.drink_img = ImageTk.PhotoImage(img)
         self.drink_label.config(image=self.drink_img)
+        
 
     def clear_drink(self):
         self.drink_label.config(image="")
@@ -814,27 +908,27 @@ class CashOrCrashApp(tk.Tk):
 
 
     def show_menu_book(self):
-        menu_window = tk.Toplevel(self)
+        self.menu_window = tk.Toplevel(self)
 
-        menu_window.title("Recipe Book")
-        menu_window.configure(bg=colors["brown"])
+        self.menu_window.title("Recipe Book")
+        self.menu_window.configure(bg=colors["brown"])
 
         # Keep recipe book above the game
-        menu_window.transient(self)
-        menu_window.grab_set()
+        self.menu_window.transient(self)
+        self.menu_window.grab_set()
 
         # Recipe book size
-        book_width = 1000
-        book_height = 667
+        book_width = 977
+        book_height = 550
 
         # Load recipe book image
-        book = Image.open("assets/recipe_book.png")
+        book = Image.open("assets/recipe_book.jpg")
         book = book.resize((book_width, book_height))
         self.recipe_book_img = ImageTk.PhotoImage(book)
 
         # Canvas for image + recipe text
         canvas = tk.Canvas(
-            menu_window,
+            self.menu_window,
             width=book_width,
             height=book_height,
             bg=colors["brown"],
@@ -851,79 +945,29 @@ class CashOrCrashApp(tk.Tk):
             anchor="nw"
         )
 
-        # Split recipes between the two pages
-        recipe_items = list(recipes.items())
 
-        left_recipes = recipe_items[:5]
-        right_recipes = recipe_items[5:10]
-
-        # Y positions of the five recipe boxes
-        y_positions = [220, 340, 465, 590, 715]
-
-        # Because the image is resized from 1536x1024 to 1000x667
-        scale_x = book_width / 1536
-        scale_y = book_height / 1024
-
-        # Convert original image coordinates to displayed coordinates
-        y_positions = [
-            int(y * scale_y)
-            for y in [220, 340, 465, 590, 725]
-        ]
-
-        # Recipe text function
-        def draw_recipe(recipe_list, x):
-            for i, (drink, ingredients) in enumerate(recipe_list):
-
-                y = y_positions[i]
-
-                # Drink name
-                canvas.create_text(
-                    x,
-                    y,
-                    text=drink,
-                    anchor="w",
-                    fill=colors["brown"],
-                    font=("retro_font", 13, "bold")
-                )
-
-                # Ingredients
-                ingredient_text = " + ".join(
-                    ingredient.title()
-                    for ingredient in ingredients
-                )
-
-                canvas.create_text(
-                    x,
-                    y + 24,
-                    text=ingredient_text,
-                    anchor="w",
-                    fill=colors["muted"],
-                    font=("retro_font", 10)
-                )
-
-        # Draw left page recipes
-        draw_recipe(
-            left_recipes,
-            int(395 * scale_x)
-        )
-
-        # Draw right page recipes
-        draw_recipe(
-            right_recipes,
-            int(875 * scale_x)
-        )
-
+    
         # Close button
         close_button = tk.Button(
-            menu_window,
+            self.menu_window,
             text="CLOSE",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
             fg="white",
             padx=25,
             pady=7,
-            command=menu_window.destroy)
+            command=self.menu_window.destroy)
         close_button.pack(pady=10)
+
+    def toggle_menu(self, event=None):
+        if self.menu_window is None or not self.menu_window.winfo_exists():
+            # Open menu
+            self.show_menu_book()
+        else:
+            # Close menu
+            self.menu_window.destroy()
+            self.menu_window = None
+
 
     def draw_intro():
         pass
