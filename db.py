@@ -30,6 +30,7 @@ def init_db():
     with get_connection() as conn:
         cursor = conn.cursor()
 
+
         # 1. User accounts
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -48,10 +49,12 @@ def init_db():
                 name TEXT,
                 balance INTEGER DEFAULT 100,
                 score INTEGER DEFAULT 0,
+                day_counter INTEGER DEFAULT 1,
                 user_id INTEGER UNIQUE,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         """)
+
 
         # 3. Individual drink orders
         cursor.execute("""
@@ -61,9 +64,12 @@ def init_db():
                 success INTEGER CHECK(success IN (0, 1)),
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 player_id INTEGER,
-                session_id INTEGER
+                session_id INTEGER,
+                FOREIGN KEY (player_id) REFERENCES players(id),
+                FOREIGN KEY (session_id) REFERENCES game_sessions(id)
             )
         """)
+        
 
         # 4. Game sessions
         cursor.execute("""

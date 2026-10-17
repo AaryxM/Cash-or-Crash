@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk,messagebox
 from PIL import Image, ImageTk
 from db import (
+    get_connection,
     save_order,
     register_user,
     authenticate_user,
@@ -28,8 +29,8 @@ colors = {
     "coral_dark": "#A94F48",
     "brown": "#e4bb8f",
     "brown_dark": "#bd8361",
-    "muted": "#d59f70",
-    "sky": "#A9DCE0",
+    "muted": "#f4e48d",
+    "sky": "#D5FAFD",
     "yellow_light": "#fbf4df",
     "green": "#79A66E",
     "counter": "#B9764D",
@@ -51,7 +52,7 @@ class CashOrCrashApp(tk.Tk):
         self.player_id = None
         self.session_id = None
         self.username = None
-
+        self.day_counter = 1
         self.session_goal = 3        # first session requires 3 customers
         self.customers_served = 0
 
@@ -377,6 +378,15 @@ class CashOrCrashApp(tk.Tk):
         )
         self.progress.pack(side="right", padx=20)
         self.progress["value"] = self.customers_served
+
+        self.day_counter_label = tk.Label(
+            header,
+            text=f"DAY: {self.day_counter}",
+            background=colors["paper"],
+            foreground=colors["coral"],
+            font=("retro_font", 18, "bold")
+        )
+        self.day_counter_label.pack(side="left", padx=20)
 
 
 
@@ -835,6 +845,9 @@ class CashOrCrashApp(tk.Tk):
                 bg=colors["brown"]
             )
 
+        self.ingredient_buttons["milk"].config(bg=colors["brown_dark"])
+        self.ingredient_buttons["water"].config(bg=colors["brown_dark"])
+
         # Clear previous result
         self.result_label.config(text="")
         self.clear_drink()
@@ -890,7 +903,6 @@ class CashOrCrashApp(tk.Tk):
             self.intro()
 
 
-       
         # Close button
        
         tk.Button(
@@ -905,6 +917,18 @@ class CashOrCrashApp(tk.Tk):
         print("End of day!")
         print("Rent: $30")
         print("Final balance:", self.current_balance)
+        with get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE players
+                    SET day_counter = day_counter + 1
+                    WHERE id = ?
+                """, (self.player_id,))
+                conn.commit()
+    
+        # Fetch updated day counter
+        cursor.execute("SELECT day_counter FROM players WHERE id = ?", (self.player_id,))
+        self.day_counter = cursor.fetchone()[0]
 
 
     def show_menu_book(self):
