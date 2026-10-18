@@ -1192,56 +1192,44 @@ class CashOrCrashApp(tk.Tk):
     #     back_btn.pack(pady=20)
 
 
+    # def tutorial_page(self):
+    #     self.clear_windows()
+    #     self.config_styles()
+
+    #     tutorial = tk.Frame(self, bg=colors["cream"], padx=40, pady=30)
+    #     tutorial.pack(fill="both", expand=True)
+
+    #     # Background image
+    #     bgimg = Image.open("./assets/bg_img_tut.png")
+    #     bgimg = bgimg.resize((1200, 800))
+    #     self.tutorial_bg_img = ImageTk.PhotoImage(bgimg)
+    #     tk.Label(self, image=self.tutorial_bg_img).place(relwidth=1, relheight=1)
+
+    #     # Back button
+    #     tk.Button(
+    #         tutorial,
+    #         text="Back to Menu",
+    #         font=("retro_font", 12, "bold"),
+    #         bg=colors["coral"],
+    #         activebackground=colors["coral_dark"],
+    #         fg="white",
+    #         command=self.intro
+    #     ).pack(pady=20)
     def tutorial_page(self):
         self.clear_windows()
         self.config_styles()
 
-        tutorial = tk.Frame(self, bg=colors["cream"], padx=40, pady=30)
-        tutorial.pack(fill="both", expand=True)
+        # --- Background image ---
+        bgimg = Image.open("./assets/bg_img_tut.png")   # 👈 your tutorial background image
+        bgimg = bgimg.resize((1200, 800))
+        self.tutorial_bg_img = ImageTk.PhotoImage(bgimg)
 
-        tk.Label(
-            tutorial,
-            text="🍹 How to Play Cash or Crash 🍹",
-            font=("retro_font", 22, "bold"),
-            bg=colors["cream"],
-            fg=colors["coral"]
-        ).pack(pady=(0, 20))
-
-        # Basic instructions
-        instructions = [
-            "1. Customers will order a random drink.",
-            "2. Select the correct ingredients by clicking the buttons.",
-            "3. Press 'CHECK ORDER' to serve the drink.",
-            "4. Correct orders earn coins based on drink price.",
-            "5. Wrong orders lose coins (half the price of the drink).",
-            "6. At the end of the day, rent ($30) is deducted.",
-            "7. Each new day increases the number of customers to serve.",
-            "8. If your balance goes below 0, you crash! (you then have to start over)"
-        ]
-
-        for line in instructions:
-            tk.Label(
-                tutorial,
-                text=line,
-                font=("retro_font", 14),
-                bg=colors["cream"],
-                fg=colors["brown"],
-                anchor="w",
-                justify="left"
-            ).pack(anchor="w", pady=5)
-
-        # Example scoring
-        tk.Label(
-            tutorial,
-            text="Example: Orange Cream costs $14. Correct order = +$14, Wrong order = -$7.",
-            font=("retro_font", 13, "italic"),
-            bg=colors["cream"],
-            fg=colors["green"]
-        ).pack(pady=(20, 10))
+        background_label = tk.Label(self, image=self.tutorial_bg_img)
+        background_label.place(relwidth=1, relheight=1)   # fills the window
 
         # Back button
         tk.Button(
-            tutorial,
+            self,
             text="Back to Menu",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
@@ -1249,6 +1237,7 @@ class CashOrCrashApp(tk.Tk):
             fg="white",
             command=self.intro
         ).pack(pady=20)
+
 
 
     def draw_intro():
