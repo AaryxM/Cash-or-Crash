@@ -12,7 +12,7 @@ from db import (
     finish_session,
     save_player
 )
-
+from db import update_highscore, get_leaderboard
 from game_logic import (
     get_random_order,
     check_order,
@@ -47,24 +47,29 @@ class CashOrCrashApp(tk.Tk):
         self.geometry('2114x1321')
         # self.session: GameSession | None = None
 
-        # self.attributes("-fullscreen", True)
+       
+        # Default values until login
         self.user_id = None
         self.player_id = None
         self.session_id = None
         self.username = None
-        self.day_counter = 1   # fallback if no player found
+        self.day_counter = 1
+        self.current_score = 0
+        self.current_balance = 50
+        self.customers_served = 0
+        self.session_goal = 3
 
         # load from DB if a user exists
-        with get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, name, balance, score, day_counter FROM players LIMIT 1")
-            player = cursor.fetchone()
-            if player:
-                self.player_id = player[0]
-                self.username = player[1]
-                self.current_balance = player[2]
-                self.current_score = player[3]
-                self.day_counter = player[4]
+        # with get_connection() as conn:
+        #     cursor = conn.cursor()
+        #     cursor.execute("SELECT id, name, balance, score, day_counter FROM players LIMIT 1")
+        #     player = cursor.fetchone()
+        #     if player:
+        #         self.player_id = player[0]
+        #         self.username = player[1]
+        #         self.current_balance = player[2]
+        #         self.current_score = player[3]
+        #         self.day_counter = player[4]
 
         self.session_goal = 3 + (self.day_counter - 1) * 2
       # first session requires 3 customers
@@ -91,6 +96,8 @@ class CashOrCrashApp(tk.Tk):
             foreground="white",
             background=colors["coral"],
             padding=(100, 30),
+            height = 30,
+            width = 20
         )
         style.map(
             "Coral.TButton",
@@ -139,6 +146,7 @@ class CashOrCrashApp(tk.Tk):
             command=self.show_game
         )
         start_btn.pack(anchor='s')
+
         tutorial_btn = ttk.Button(
             self,
             text="TUTORIAL",
@@ -146,6 +154,16 @@ class CashOrCrashApp(tk.Tk):
             command=self.tutorial_page
         )
         tutorial_btn.pack(anchor='s', pady=10)
+
+        leaderboard = get_leaderboard()
+        leaderboard_btn = ttk.Button(
+            self,
+            text="LEADERBOARD",
+            style="Coral.TButton",
+            command=self.show_leaderboard
+        )
+        leaderboard_btn.pack(anchor='s', pady=10)
+       
 
 
     def login_screen(self):
@@ -225,51 +243,96 @@ class CashOrCrashApp(tk.Tk):
         password = self.password_entry.get()
 
         if not username or not password:
-            messagebox.showwarning(
-                "Missing details",
-                "Please enter your username and password."
-            )
+            messagebox.showwarning("Missing details", "Please enter your username and password.")
             return
 
         user_id = authenticate_user(username, password)
-
         if user_id is None:
-            messagebox.showerror(
-                "Login failed",
-                "Incorrect username or password."
-            )
+            messagebox.showerror("Login failed", "Incorrect username or password.")
             return
 
         player = get_player(user_id)
-
         if player is None:
-            messagebox.showerror(
-                "Error",
-                "Player profile could not be found."
-            )
+            messagebox.showerror("Error", "Player profile could not be found.")
             return
 
+        # --- Set current user state ---
         self.user_id = user_id
         self.player_id = player[0]
         self.username = player[1]
-
-        # Retrieve saved data from the database
         self.current_balance = player[2]
-
-        # Score should always equal the balance
-        self.current_score = self.current_balance
+        self.current_score = player[3]
         self.day_counter = player[4]
 
-        # Keep the database score synchronized with the balance
+        # --- Reset progress bar state ---
+        self.session_goal = 3 + (self.day_counter - 1) * 2
+        self.customers_served = 0
+
+        # --- Keep DB in sync ---
         save_player(
             self.username,
             self.current_balance,
             self.current_score,
-            self.user_id
+            self.user_id,
+            self.day_counter
         )
 
-        # Open the existing START screen
+        # --- Show intro screen ---
         self.intro()
+
+    # def login_user(self):
+    #     username = self.username_entry.get().strip()
+    #     password = self.password_entry.get()
+
+    #     if not username or not password:
+    #         messagebox.showwarning(
+    #             "Missing details",
+    #             "Please enter your username and password."
+    #         )
+    #         return
+
+    #     user_id = authenticate_user(username, password)
+
+    #     if user_id is None:
+    #         messagebox.showerror(
+    #             "Login failed",
+    #             "Incorrect username or password."
+    #         )
+    #         return
+
+    #     player = get_player(user_id)
+
+    #     if player is None:
+    #         messagebox.showerror(
+    #             "Error",
+    #             "Player profile could not be found."
+    #         )
+    #         return
+
+    #     self.user_id = user_id
+    #     self.player_id = player[0]
+    #     self.username = player[1]
+
+        
+
+    #     # Retrieve saved data from the database
+    #     self.current_balance = player[2]
+
+    #     # Score should always equal the balance if score<balance
+    #     if self.current_balance>self.current_score:
+    #         self.current_score = self.current_balance
+    #     self.day_counter = player[4]
+
+    #     # Keep the database score synchronized with the balance
+    #     save_player(
+    #         self.username,
+    #         self.current_balance,
+    #         self.current_score,
+    #         self.user_id
+    #     )
+
+    #     # Open the existing START screen
+    #     self.intro()
 
     def registration_screen(self):
             self.clear_windows()
@@ -851,6 +914,7 @@ class CashOrCrashApp(tk.Tk):
         self.customers_served = 0
         self.session_goal = 3
 
+        update_highscore(self.player_id, self.current_score)
         # Load and display a "Game Over" image
         gameover_img = Image.open("./assets/gameover.png").resize((1000, 600))
         self.gameover_img = ImageTk.PhotoImage(gameover_img)
@@ -1044,6 +1108,89 @@ class CashOrCrashApp(tk.Tk):
             # Close menu
             self.menu_window.destroy()
             self.menu_window = None
+    def show_leaderboard(self):
+        self.clear_windows()
+        self.config_styles()
+
+        # Leaderboard frame
+        board_frame = tk.Frame(self, bg=colors["paper"], padx=40, pady=30)
+        board_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Title
+        tk.Label(
+            board_frame,
+            text="🏆 Leaderboard 🏆",
+            font=("retro_font", 28, "bold"),
+            bg=colors["paper"],
+            fg=colors["coral"]
+        ).pack(pady=(0, 20))
+
+        # Fetch top scores
+        leaderboard = get_leaderboard(limit=10)
+
+        # Table headers
+        header_frame = tk.Frame(board_frame, bg=colors["paper"])
+        header_frame.pack(fill="x", pady=(0, 10))
+
+        tk.Label(header_frame, text="Player", font=("retro_font", 16, "bold"),
+                bg=colors["paper"], fg=colors["brown"]).pack(side="left", padx=40)
+        tk.Label(header_frame, text="Score", font=("retro_font", 16, "bold"),
+                bg=colors["paper"], fg=colors["brown"]).pack(side="right", padx=40)
+
+        # Rows
+        for idx, (name, score) in enumerate(leaderboard, start=1):
+            row_frame = tk.Frame(board_frame, bg=colors["paper"])
+            row_frame.pack(fill="x", pady=5)
+
+            # Alternate row colors for readability
+            bg_color = colors["cream"] if idx % 2 == 0 else colors["yellow_light"]
+
+            tk.Label(row_frame, text=f"{idx}. {name}", font=("retro_font", 14),
+                    bg=bg_color, fg=colors["coral"]).pack(side="left", padx=40)
+
+            tk.Label(row_frame, text=str(score), font=("retro_font", 14),
+                    bg=bg_color, fg=colors["green"]).pack(side="right", padx=40)
+
+        # Back button
+        back_btn = ttk.Button(
+            board_frame,
+            text="⬅ BACK",
+            style="Coral.TButton",
+            command=self.intro
+        )
+        back_btn.pack(pady=20)
+
+    # def show_leaderboard(self):
+    #     self.clear_windows()
+    #     self.config_styles()
+
+    #     tk.Label(
+    #         self,
+    #         text="🏆 Leaderboard",
+    #         font=("retro_font", 24, "bold"),
+    #         bg=colors["cream"],
+    #         fg=colors["coral"]
+    #     ).pack(pady=20)
+
+    #     leaderboard = get_leaderboard(limit=10)
+
+    #     for name, score in leaderboard:
+    #         tk.Label(
+    #             self,
+    #             text=f"{name}: {score}",
+    #             font=("retro_font", 16),
+    #             bg=colors["cream"],
+    #             fg=colors["brown"]
+    #         ).pack(pady=5)
+
+    #     back_btn = ttk.Button(
+    #         self,
+    #         text="BACK",
+    #         style="Coral.TButton",
+    #         command=self.intro
+    #     )
+    #     back_btn.pack(pady=20)
+
 
     def tutorial_page(self):
         self.clear_windows()
@@ -1068,7 +1215,7 @@ class CashOrCrashApp(tk.Tk):
             "4. Correct orders earn coins based on drink price.",
             "5. Wrong orders lose coins (half the price of the drink).",
             "6. At the end of the day, rent ($30) is deducted.",
-            "7. Each new day increases the number of customers to serve."
+            "7. Each new day increases the number of customers to serve.",
             "8. If your balance goes below 0, you crash! (you then have to start over)"
         ]
 

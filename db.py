@@ -155,8 +155,8 @@ def register_user(username, password):
             user_id = cursor.lastrowid
 
             cursor.execute("""
-                INSERT INTO players (name, balance, score, user_id)
-                VALUES (?, 50, 0, ?)
+                INSERT INTO players (name, balance, score, day_counter, user_id)
+                VALUES (?, 50, 0, 1, ?)
             """, (username, user_id))
 
         return True, "Registration successful!"
@@ -202,24 +202,24 @@ def get_player(user_id):
         return cursor.fetchone()
 
 
-def save_player(name, balance, score, user_id=None):
+def save_player(name, balance, score, user_id=None, day_counter = 1):
     with get_connection() as conn:
         cursor = conn.cursor()
 
         if user_id is not None:
             cursor.execute("""
                 UPDATE players
-                SET name = ?, balance = ?, score = ?
+                SET name = ?, balance = ?, score = ?, day_counter = ?
                 WHERE user_id = ?
-            """, (name, balance, score, user_id))
+            """, (name, balance, score, day_counter, user_id))
 
             if cursor.rowcount:
                 return
 
         cursor.execute("""
-            INSERT INTO players (name, balance, score, user_id)
+            INSERT INTO players (name, balance, score, day_counter, user_id)
             VALUES (?, ?, ?, ?)
-        """, (name, balance, score, user_id))
+        """, (name, balance, score, day_counter, user_id))
 
 
 def save_order(drink, success, player_id=None, session_id=None):
@@ -279,6 +279,24 @@ def get_high_scores():
         """)
 
         return cursor.fetchall()
+
+def get_leaderboard(limit=5):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT name, score FROM players ORDER BY score DESC LIMIT ?",
+            (limit,)
+        )
+        return cursor.fetchall()
+
+def update_highscore(player_id, score):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT score FROM players WHERE id=?", (player_id,))
+        current = cursor.fetchone()[0]
+        if score > current:
+            cursor.execute("UPDATE players SET score=? WHERE id=?", (score, player_id))
+            conn.commit()
 
 
 if __name__ == "__main__":
