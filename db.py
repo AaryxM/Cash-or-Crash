@@ -47,7 +47,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS players (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
-                balance INTEGER DEFAULT 100,
+                balance INTEGER DEFAULT 50,
                 score INTEGER DEFAULT 0,
                 day_counter INTEGER DEFAULT 1,
                 user_id INTEGER UNIQUE,
@@ -156,7 +156,7 @@ def register_user(username, password):
 
             cursor.execute("""
                 INSERT INTO players (name, balance, score, user_id)
-                VALUES (?, 100, 0, ?)
+                VALUES (?, 50, 0, ?)
             """, (username, user_id))
 
         return True, "Registration successful!"

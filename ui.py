@@ -124,7 +124,7 @@ class CashOrCrashApp(tk.Tk):
 
         # game logo ⚒️🛠️
 
-        logoimg = Image.open("game_logo.png").convert("RGBA")
+        logoimg = Image.open("./assets/game_logo.png").convert("RGBA")
         logoimg = logoimg.resize((800, 350))
 
         self.logo_img = ImageTk.PhotoImage(logoimg)
