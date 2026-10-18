@@ -569,10 +569,12 @@ class CashOrCrashApp(tk.Tk):
             image=self.ingredient_images["ice"],
             bg=colors["brown"],
             relief="flat",
+            height= 100,
+            width=140,
             command=lambda item="ice": self.select_ingredient(item),
         )
         self.ingredient_buttons["ice"] = ice_button
-        self.ingredient_buttons["ice"].place(x=330, y=715)
+        self.ingredient_buttons["ice"].place(x=315, y=715)
 
         # Sugar button
         sugar_img = Image.open("./assets/sugar.png").resize((120, 120))
@@ -695,7 +697,7 @@ class CashOrCrashApp(tk.Tk):
             bg=colors["brown"],fg="white",
             padx=20,pady=8,command=self.finish_day)
 
-        end_day_button.place(relx=0.85,rely=0.95,anchor="center")
+        # end_day_button.place(relx=0.85,rely=0.95,anchor="center")
 
         self.result_label = tk.Label(self,text="",
             background=colors["brown_dark"],foreground=colors["brown"],
@@ -959,6 +961,7 @@ class CashOrCrashApp(tk.Tk):
             text="OK",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
+            activebackground=colors["coral_dark"],
             fg="white",
             command=close_and_restart   
         ).pack(pady=20)
@@ -1026,6 +1029,7 @@ class CashOrCrashApp(tk.Tk):
             text="CLOSE",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
+            activebackground=colors["coral_dark"],
             fg="white",
             padx=25,
             pady=7,
@@ -1094,6 +1098,7 @@ class CashOrCrashApp(tk.Tk):
             text="Back to Menu",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
+            activebackground=colors["coral_dark"],
             fg="white",
             command=self.intro
         ).pack(pady=20)
