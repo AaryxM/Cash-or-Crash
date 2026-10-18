@@ -997,7 +997,7 @@ class CashOrCrashApp(tk.Tk):
         # Rent and balance info
         tk.Label(
             popup,
-            text="Rent: $30",
+            text="Supplies: $30",
             font=("retro_font", 14),
             bg=colors["cream"],
             fg=colors["brown"]
