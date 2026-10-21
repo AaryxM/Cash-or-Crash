@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk,messagebox
 from PIL import Image, ImageTk
 from db import (
+    get_connection,
     save_order,
     register_user,
     authenticate_user,
@@ -11,7 +12,7 @@ from db import (
     finish_session,
     save_player
 )
-
+from db import update_highscore, get_leaderboard
 from game_logic import (
     get_random_order,
     check_order,
@@ -28,8 +29,8 @@ colors = {
     "coral_dark": "#A94F48",
     "brown": "#e4bb8f",
     "brown_dark": "#bd8361",
-    "muted": "#d59f70",
-    "sky": "#A9DCE0",
+    "muted": "#f4e48d",
+    "sky": "#D5FAFD",
     "yellow_light": "#fbf4df",
     "green": "#79A66E",
     "counter": "#B9764D",
@@ -46,13 +47,32 @@ class CashOrCrashApp(tk.Tk):
         self.geometry('2114x1321')
         # self.session: GameSession | None = None
 
-        # self.attributes("-fullscreen", True)
+       
+        # Default values until login
         self.user_id = None
         self.player_id = None
         self.session_id = None
         self.username = None
+        self.day_counter = 1
+        self.current_score = 0
+        self.current_balance = 50
+        self.customers_served = 0
+        self.session_goal = 3
 
-        self.session_goal = 3        # first session requires 3 customers
+        # load from DB if a user exists
+        # with get_connection() as conn:
+        #     cursor = conn.cursor()
+        #     cursor.execute("SELECT id, name, balance, score, day_counter FROM players LIMIT 1")
+        #     player = cursor.fetchone()
+        #     if player:
+        #         self.player_id = player[0]
+        #         self.username = player[1]
+        #         self.current_balance = player[2]
+        #         self.current_score = player[3]
+        #         self.day_counter = player[4]
+
+        self.session_goal = 3 + (self.day_counter - 1) * 2
+      # first session requires 3 customers
         self.customers_served = 0
 
     def config_styles(self):
@@ -76,6 +96,8 @@ class CashOrCrashApp(tk.Tk):
             foreground="white",
             background=colors["coral"],
             padding=(100, 30),
+            height = 30,
+            width = 20
         )
         style.map(
             "Coral.TButton",
@@ -109,7 +131,7 @@ class CashOrCrashApp(tk.Tk):
 
         # game logo ⚒️🛠️
 
-        logoimg = Image.open("game_logo.png").convert("RGBA")
+        logoimg = Image.open("./assets/game_logo.png").convert("RGBA")
         logoimg = logoimg.resize((800, 350))
 
         self.logo_img = ImageTk.PhotoImage(logoimg)
@@ -124,6 +146,25 @@ class CashOrCrashApp(tk.Tk):
             command=self.show_game
         )
         start_btn.pack(anchor='s')
+
+        tutorial_btn = ttk.Button(
+            self,
+            text="TUTORIAL",
+            style="Coral.TButton",
+            command=self.tutorial_page
+        )
+        tutorial_btn.pack(anchor='s', pady=10)
+
+        leaderboard = get_leaderboard()
+        leaderboard_btn = ttk.Button(
+            self,
+            text="LEADERBOARD",
+            style="Coral.TButton",
+            command=self.show_leaderboard
+        )
+        leaderboard_btn.pack(anchor='s', pady=10)
+       
+
 
     def login_screen(self):
         self.clear_windows()
@@ -202,50 +243,96 @@ class CashOrCrashApp(tk.Tk):
         password = self.password_entry.get()
 
         if not username or not password:
-            messagebox.showwarning(
-                "Missing details",
-                "Please enter your username and password."
-            )
+            messagebox.showwarning("Missing details", "Please enter your username and password.")
             return
 
         user_id = authenticate_user(username, password)
-
         if user_id is None:
-            messagebox.showerror(
-                "Login failed",
-                "Incorrect username or password."
-            )
+            messagebox.showerror("Login failed", "Incorrect username or password.")
             return
 
         player = get_player(user_id)
-
         if player is None:
-            messagebox.showerror(
-                "Error",
-                "Player profile could not be found."
-            )
+            messagebox.showerror("Error", "Player profile could not be found.")
             return
 
+        # --- Set current user state ---
         self.user_id = user_id
         self.player_id = player[0]
         self.username = player[1]
-
-        # Retrieve saved data from the database
         self.current_balance = player[2]
+        self.current_score = player[3]
+        self.day_counter = player[4]
 
-        # Score should always equal the balance
-        self.current_score = self.current_balance
+        # --- Reset progress bar state ---
+        self.session_goal = 3 + (self.day_counter - 1) * 2
+        self.customers_served = 0
 
-        # Keep the database score synchronized with the balance
+        # --- Keep DB in sync ---
         save_player(
             self.username,
             self.current_balance,
             self.current_score,
-            self.user_id
+            self.user_id,
+            self.day_counter
         )
 
-        # Open the existing START screen
+        # --- Show intro screen ---
         self.intro()
+
+    # def login_user(self):
+    #     username = self.username_entry.get().strip()
+    #     password = self.password_entry.get()
+
+    #     if not username or not password:
+    #         messagebox.showwarning(
+    #             "Missing details",
+    #             "Please enter your username and password."
+    #         )
+    #         return
+
+    #     user_id = authenticate_user(username, password)
+
+    #     if user_id is None:
+    #         messagebox.showerror(
+    #             "Login failed",
+    #             "Incorrect username or password."
+    #         )
+    #         return
+
+    #     player = get_player(user_id)
+
+    #     if player is None:
+    #         messagebox.showerror(
+    #             "Error",
+    #             "Player profile could not be found."
+    #         )
+    #         return
+
+    #     self.user_id = user_id
+    #     self.player_id = player[0]
+    #     self.username = player[1]
+
+        
+
+    #     # Retrieve saved data from the database
+    #     self.current_balance = player[2]
+
+    #     # Score should always equal the balance if score<balance
+    #     if self.current_balance>self.current_score:
+    #         self.current_score = self.current_balance
+    #     self.day_counter = player[4]
+
+    #     # Keep the database score synchronized with the balance
+    #     save_player(
+    #         self.username,
+    #         self.current_balance,
+    #         self.current_score,
+    #         self.user_id
+    #     )
+
+    #     # Open the existing START screen
+    #     self.intro()
 
     def registration_screen(self):
             self.clear_windows()
@@ -342,6 +429,12 @@ class CashOrCrashApp(tk.Tk):
     def show_game(self):
         self.clear_windows()
 
+        # Track menu window
+        self.menu_window = None
+
+        # Bind 'm' key to toggle menu
+        self.bind("<m>", self.toggle_menu)
+
         # headers with the current session details!
         header = tk.Frame(
             self,
@@ -372,6 +465,15 @@ class CashOrCrashApp(tk.Tk):
         self.progress.pack(side="right", padx=20)
         self.progress["value"] = self.customers_served
 
+        self.day_counter_label = tk.Label(
+            header,
+            text=f"DAY: {self.day_counter}",
+            background=colors["paper"],
+            foreground=colors["coral"],
+            font=("retro_font", 18, "bold")
+        )
+        self.day_counter_label.pack(side="left", padx=20)
+
 
 
         # Get a random customer order
@@ -390,7 +492,7 @@ class CashOrCrashApp(tk.Tk):
             background=colors["paper"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
         
-        self.order_label.pack(side="left", padx=50)
+        self.order_label.pack(side="left", padx=30)
 
         # Use the balance retrieved during login
         bal = self.current_balance
@@ -441,7 +543,8 @@ class CashOrCrashApp(tk.Tk):
         stand_label.pack(side="top")
         # Drink display (blank spot on the counter)
         self.drink_label = tk.Label(self, bg="#e7ccb0", bd=0) 
-        self.drink_label.place(x=950, y=600)   
+        
+        self.drink_label.place(x=950, y=584)   
         self.drink_img = None
 
         # Customer
@@ -488,27 +591,157 @@ class CashOrCrashApp(tk.Tk):
         self.ingredient_images = {}
         self.ingredient_buttons = {}
 
-        for ingredient in ingredients:
-            image = Image.open(f"./assets/{ingredient}.png")
-            #thumbnail to maintain the size ratio
-            image.thumbnail((230, 230))
-            self.ingredient_images[ingredient] = ImageTk.PhotoImage(image)
+        # Orange button
+        orange_img = Image.open("./assets/orange.png").resize((200, 200))
+        self.ingredient_images["orange"] = ImageTk.PhotoImage(orange_img)
 
-            button = tk.Button(
-                self,
-                image=self.ingredient_images[ingredient],
-                # bg=colors["yellow"],
-                bg=colors["brown"],
-                height = 100,
-                width= 140,
-                padx=0,
-                pady=0,
-                relief = "flat",
-                command=lambda item=ingredient: self.select_ingredient(item),
-            )
-            self.ingredient_buttons[ingredient] = button
+        orange_button = tk.Button(
+            self,
+            image=self.ingredient_images["orange"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="orange": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["orange"] = orange_button
+        self.ingredient_buttons["orange"].place(x=315, y=585)
 
-            check_button = tk.Button(
+        # Lemon button
+        lemon_img = Image.open("./assets/lemon.png").resize((200, 200))
+        self.ingredient_images["lemon"] = ImageTk.PhotoImage(lemon_img)
+
+        lemon_button = tk.Button(
+            self,
+            image=self.ingredient_images["lemon"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="lemon": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["lemon"] = lemon_button
+        self.ingredient_buttons["lemon"].place(x=515, y=585)
+
+        # Ice button
+        ice_img = Image.open("./assets/ice.png").resize((100, 100))
+        self.ingredient_images["ice"] = ImageTk.PhotoImage(ice_img)
+
+        ice_button = tk.Button(
+            self,
+            image=self.ingredient_images["ice"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="ice": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["ice"] = ice_button
+        self.ingredient_buttons["ice"].place(x=315, y=715)
+
+        # Sugar button
+        sugar_img = Image.open("./assets/sugar.png").resize((120, 120))
+        self.ingredient_images["sugar"] = ImageTk.PhotoImage(sugar_img)
+
+        sugar_button = tk.Button(
+            self,
+            image=self.ingredient_images["sugar"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="sugar": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["sugar"] = sugar_button
+        self.ingredient_buttons["sugar"].place(x = 520, y = 715)
+
+        # Mint button
+        mint_img = Image.open("./assets/mint.png").resize((200, 200))
+        self.ingredient_images["mint"] = ImageTk.PhotoImage(mint_img)
+
+        mint_button = tk.Button(
+            self,
+            image=self.ingredient_images["mint"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="mint": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["mint"] = mint_button
+        self.ingredient_buttons["mint"].place(x = 110, y = 715)
+
+        # watermelon button
+        watermelon_img = Image.open("./assets/watermelon.png").resize((200, 200))
+        self.ingredient_images["watermelon"] = ImageTk.PhotoImage(watermelon_img)
+
+        watermelon_button = tk.Button(
+            self,
+            image=self.ingredient_images["watermelon"],
+            bg=colors["brown"],
+            relief="flat",
+            height= 100,
+            width=140,
+            command=lambda item="watermelon": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["watermelon"] = watermelon_button
+        self.ingredient_buttons["watermelon"].place(x = 110, y = 585)
+
+        # milk button
+        milk_img = Image.open("./assets/milk.png").resize((200, 200))
+        self.ingredient_images["milk"] = ImageTk.PhotoImage(milk_img)
+
+        milk_button = tk.Button(
+            self,
+            image=self.ingredient_images["milk"],
+            bg=colors["brown_dark"],
+            relief="flat",
+            width = 80,
+            height = 110,
+            command=lambda item="milk": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["milk"] = milk_button
+        self.ingredient_buttons["milk"].place(x = 0, y = 550)
+
+        # wwater button
+        water_img = Image.open("./assets/water.png").resize((150, 150))
+        self.ingredient_images["water"] = ImageTk.PhotoImage(water_img)
+
+        water_button = tk.Button(
+            self,
+            image=self.ingredient_images["water"],
+            bg=colors["brown_dark"],
+            relief="flat",
+            width = 80,
+            height = 120,
+            command=lambda item="water": self.select_ingredient(item),
+        )
+        self.ingredient_buttons["water"] = water_button
+        self.ingredient_buttons["water"].place(x = 0, y = 700)
+
+
+
+        # for ingredient in ingredients:
+        #     image = Image.open(f"./assets/{ingredient}.png")
+        #     #thumbnail to maintain the size ratio
+        #     image.thumbnail((230, 230))
+        #     self.ingredient_images[ingredient] = ImageTk.PhotoImage(image)
+
+        #     button = tk.Button(
+        #         self,
+        #         image=self.ingredient_images[ingredient],
+        #         # bg=colors["yellow"],
+        #         bg=colors["brown"],
+        #         height = 100,
+        #         width= 140,
+        #         padx=0,
+        #         pady=0,
+        #         relief = "flat",
+        #         command=lambda item=ingredient: self.select_ingredient(item),
+        #     )
+        #     self.ingredient_buttons[ingredient] = button
+
+        check_button = tk.Button(
             self,
             text="CHECK ORDER",
             font=("retro_font", 14, "bold"),
@@ -520,73 +753,32 @@ class CashOrCrashApp(tk.Tk):
             pady=10,
             command=self.check_current_order)
 
-            check_button.place(relx=0.5,rely=0.95,anchor="center")
+        check_button.place(relx=0.5,rely=0.95,anchor="center")
 
-            end_day_button = tk.Button(
+        end_day_button = tk.Button(
             self,text="END DAY",font=("retro_font", 12, "bold"),
             bg=colors["brown"],fg="white",
             padx=20,pady=8,command=self.finish_day)
 
-            end_day_button.place(relx=0.85,rely=0.95,anchor="center")
+        # end_day_button.place(relx=0.85,rely=0.95,anchor="center")
 
-            self.result_label = tk.Label(self,text="",
+        self.result_label = tk.Label(self,text="",
             background=colors["brown_dark"],foreground=colors["brown"],
             font=("retro_font", 18, "bold"))
 
-            self.result_label.place(relx=0.5,rely=0.78,anchor="center")
+        self.result_label.place(relx=0.5,rely=0.78,anchor="center")
            
-        self.ingredient_buttons['watermelon'].place(x = 110, y = 580)
-        self.ingredient_buttons['orange'].place(x = 315, y= 580)
-        self.ingredient_buttons['lemon'].place(x = 515, y = 580)
-        self.ingredient_buttons['mint'].place(x = 110, y = 710)
-        self.ingredient_buttons['ice'].place(x = 315, y = 710)
-        self.ingredient_buttons['sugar'].place(x = 515, y = 710)
-
-        image = Image.open(f"./assets/milk.png")
-        image.thumbnail((230, 230))
-        self.ingredient_images["milk"] = ImageTk.PhotoImage(image)
-        milk_button = tk.Button(
-            self,
-            image=self.ingredient_images["milk"],
-            # bg=colors["yellow"],
-            bg=colors["brown_dark"],
-            height = 130,
-            width= 100,
-            padx=0,
-            pady=0,
-            relief = "flat",
-            command=lambda item="milk": self.select_ingredient(item),
-        )
-        self.ingredient_buttons["milk"] = milk_button
-        self.ingredient_buttons['milk'].place(x = 0, y = 550)
-
-        image = Image.open(f"./assets/water.png")
-        image.thumbnail((230, 230))
-        self.ingredient_images["water"] = ImageTk.PhotoImage(image)
-        water_button = tk.Button(
-            self,
-            image=self.ingredient_images["water"],
-            # bg=colors["yellow"],
-            bg=colors["brown_dark"],
-            height = 130,
-            width= 100,
-            padx=0,
-            pady=0,
-            relief = "flat",
-            command=lambda item="water": self.select_ingredient(item),
-        )
-        self.ingredient_buttons["water"] = water_button
-        self.ingredient_buttons['water'].place(x = 0, y = 700)
         
     def show_drink(self, drink_name):
         # file name like assets/drinks/lemonade.png
         filename = drink_name.lower().replace(" ", "_")
-        img = Image.open(f"./assets/drinks/{filename}.png").convert("RGBA")
-        img.thumbnail((200, 200))   # keeps aspect ratio
+        img = Image.open(f"./assets/drinks/{filename}.png")
+        img = img.resize((225, 225), Image.Resampling.LANCZOS)
 
         # keep a reference on self or Tkinter will garbage-collect the image
         self.drink_img = ImageTk.PhotoImage(img)
         self.drink_label.config(image=self.drink_img)
+        
 
     def clear_drink(self):
         self.drink_label.config(image="")
@@ -629,8 +821,8 @@ class CashOrCrashApp(tk.Tk):
         self.orders.append({"drink": self.current_order,"success": success})
 
         # Update balance
-        self.current_balance = update_balance(self.current_balance, success)
-        
+        self.current_balance = update_balance(self.current_balance, self.current_order, success)
+
         # Score always equals balance
         self.current_score = self.current_balance
 
@@ -645,23 +837,28 @@ class CashOrCrashApp(tk.Tk):
                 self.current_score,
                 self.user_id
             )
+      
 
         # Update score for a correct order
         #if success:
           #  self.current_score += 1
 
         # Show result
+      
         if success:
-            result_text = "✓ CORRECT ORDER! +$10"
+            price = recipes[self.current_order]["price"]
+            result_text = f"✓ CORRECT ORDER! +${price}"
             result_color = colors["green"]
             self.show_drink(self.current_order)
         else:
-            result_text = "✗ WRONG ORDER! -$5"
+            penalty = recipes[self.current_order]["price"] - recipes[self.current_order]["price"]*0.5   # or recipes[self.current_order]["penalty"] if you add per‑drink penalties
+            result_text = f"✗ WRONG ORDER! -${penalty}"
             result_color = colors["coral"]
 
         self.result_label.config(
             text=result_text,
-            foreground=result_color
+            foreground=result_color,
+            background=colors["cream"]
         )
 
         # --- NEW: update progress bar
@@ -693,9 +890,31 @@ class CashOrCrashApp(tk.Tk):
 
 
     def show_game_over(self):
+       
+                    
         # Clear the window
         self.clear_windows()
 
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE players
+                SET day_counter = 1,
+                    balance = 10,
+                    score = 10
+                WHERE id = ?
+            """, (self.player_id,))
+            conn.commit()
+
+      
+     # Reset local state
+        self.day_counter = 1
+        self.current_balance = 10
+        self.current_score = 10
+        self.customers_served = 0
+        self.session_goal = 3
+
+        update_highscore(self.player_id, self.current_score)
         # Load and display a "Game Over" image
         gameover_img = Image.open("./assets/gameover.png").resize((1000, 600))
         self.gameover_img = ImageTk.PhotoImage(gameover_img)
@@ -741,6 +960,9 @@ class CashOrCrashApp(tk.Tk):
                 bg=colors["brown"]
             )
 
+        self.ingredient_buttons["milk"].config(bg=colors["brown_dark"])
+        self.ingredient_buttons["water"].config(bg=colors["brown_dark"])
+
         # Clear previous result
         self.result_label.config(text="")
         self.clear_drink()
@@ -775,7 +997,7 @@ class CashOrCrashApp(tk.Tk):
         # Rent and balance info
         tk.Label(
             popup,
-            text="Rent: $30",
+            text="Supplies: $30",
             font=("retro_font", 14),
             bg=colors["cream"],
             fg=colors["brown"]
@@ -796,7 +1018,6 @@ class CashOrCrashApp(tk.Tk):
             self.intro()
 
 
-       
         # Close button
        
         tk.Button(
@@ -804,6 +1025,7 @@ class CashOrCrashApp(tk.Tk):
             text="OK",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
+            activebackground=colors["coral_dark"],
             fg="white",
             command=close_and_restart   
         ).pack(pady=20)
@@ -811,30 +1033,42 @@ class CashOrCrashApp(tk.Tk):
         print("End of day!")
         print("Rent: $30")
         print("Final balance:", self.current_balance)
+        with get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE players
+                    SET day_counter = day_counter + 1
+                    WHERE id = ?
+                """, (self.player_id,))
+                conn.commit()
+    
+        # Fetch updated day counter
+        cursor.execute("SELECT day_counter FROM players WHERE id = ?", (self.player_id,))
+        self.day_counter = cursor.fetchone()[0]
 
 
     def show_menu_book(self):
-        menu_window = tk.Toplevel(self)
+        self.menu_window = tk.Toplevel(self)
 
-        menu_window.title("Recipe Book")
-        menu_window.configure(bg=colors["brown"])
+        self.menu_window.title("Recipe Book")
+        self.menu_window.configure(bg=colors["brown"])
 
         # Keep recipe book above the game
-        menu_window.transient(self)
-        menu_window.grab_set()
+        self.menu_window.transient(self)
+        self.menu_window.grab_set()
 
         # Recipe book size
-        book_width = 1000
-        book_height = 667
+        book_width = 977
+        book_height = 550
 
         # Load recipe book image
-        book = Image.open("assets/recipe_book.png")
+        book = Image.open("assets/recipe_book.jpg")
         book = book.resize((book_width, book_height))
         self.recipe_book_img = ImageTk.PhotoImage(book)
 
         # Canvas for image + recipe text
         canvas = tk.Canvas(
-            menu_window,
+            self.menu_window,
             width=book_width,
             height=book_height,
             bg=colors["brown"],
@@ -851,79 +1085,160 @@ class CashOrCrashApp(tk.Tk):
             anchor="nw"
         )
 
-        # Split recipes between the two pages
-        recipe_items = list(recipes.items())
 
-        left_recipes = recipe_items[:5]
-        right_recipes = recipe_items[5:10]
-
-        # Y positions of the five recipe boxes
-        y_positions = [220, 340, 465, 590, 715]
-
-        # Because the image is resized from 1536x1024 to 1000x667
-        scale_x = book_width / 1536
-        scale_y = book_height / 1024
-
-        # Convert original image coordinates to displayed coordinates
-        y_positions = [
-            int(y * scale_y)
-            for y in [220, 340, 465, 590, 725]
-        ]
-
-        # Recipe text function
-        def draw_recipe(recipe_list, x):
-            for i, (drink, ingredients) in enumerate(recipe_list):
-
-                y = y_positions[i]
-
-                # Drink name
-                canvas.create_text(
-                    x,
-                    y,
-                    text=drink,
-                    anchor="w",
-                    fill=colors["brown"],
-                    font=("retro_font", 13, "bold")
-                )
-
-                # Ingredients
-                ingredient_text = " + ".join(
-                    ingredient.title()
-                    for ingredient in ingredients
-                )
-
-                canvas.create_text(
-                    x,
-                    y + 24,
-                    text=ingredient_text,
-                    anchor="w",
-                    fill=colors["muted"],
-                    font=("retro_font", 10)
-                )
-
-        # Draw left page recipes
-        draw_recipe(
-            left_recipes,
-            int(395 * scale_x)
-        )
-
-        # Draw right page recipes
-        draw_recipe(
-            right_recipes,
-            int(875 * scale_x)
-        )
-
+    
         # Close button
         close_button = tk.Button(
-            menu_window,
+            self.menu_window,
             text="CLOSE",
             font=("retro_font", 12, "bold"),
             bg=colors["coral"],
+            activebackground=colors["coral_dark"],
             fg="white",
             padx=25,
             pady=7,
-            command=menu_window.destroy)
+            command=self.menu_window.destroy)
         close_button.pack(pady=10)
+
+    def toggle_menu(self, event=None):
+        if self.menu_window is None or not self.menu_window.winfo_exists():
+            # Open menu
+            self.show_menu_book()
+        else:
+            # Close menu
+            self.menu_window.destroy()
+            self.menu_window = None
+    def show_leaderboard(self):
+        self.clear_windows()
+        self.config_styles()
+
+        # Leaderboard frame
+        board_frame = tk.Frame(self, bg=colors["paper"], padx=40, pady=30)
+        board_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Title
+        tk.Label(
+            board_frame,
+            text="🏆 Leaderboard 🏆",
+            font=("retro_font", 28, "bold"),
+            bg=colors["paper"],
+            fg=colors["coral"]
+        ).pack(pady=(0, 20))
+
+        # Fetch top scores
+        leaderboard = get_leaderboard(limit=10)
+
+        # Table headers
+        header_frame = tk.Frame(board_frame, bg=colors["paper"])
+        header_frame.pack(fill="x", pady=(0, 10))
+
+        tk.Label(header_frame, text="Player", font=("retro_font", 16, "bold"),
+                bg=colors["paper"], fg=colors["brown"]).pack(side="left", padx=40)
+        tk.Label(header_frame, text="Score", font=("retro_font", 16, "bold"),
+                bg=colors["paper"], fg=colors["brown"]).pack(side="right", padx=40)
+
+        # Rows
+        for idx, (name, score) in enumerate(leaderboard, start=1):
+            row_frame = tk.Frame(board_frame, bg=colors["paper"])
+            row_frame.pack(fill="x", pady=5)
+
+            # Alternate row colors for readability
+            bg_color = colors["cream"] if idx % 2 == 0 else colors["yellow_light"]
+
+            tk.Label(row_frame, text=f"{idx}. {name}", font=("retro_font", 14),
+                    bg=bg_color, fg=colors["coral"]).pack(side="left", padx=40)
+
+            tk.Label(row_frame, text=str(score), font=("retro_font", 14),
+                    bg=bg_color, fg=colors["green"]).pack(side="right", padx=40)
+
+        # Back button
+        back_btn = ttk.Button(
+            board_frame,
+            text="⬅ BACK",
+            style="Coral.TButton",
+            command=self.intro
+        )
+        back_btn.pack(pady=20)
+
+    # def show_leaderboard(self):
+    #     self.clear_windows()
+    #     self.config_styles()
+
+    #     tk.Label(
+    #         self,
+    #         text="🏆 Leaderboard",
+    #         font=("retro_font", 24, "bold"),
+    #         bg=colors["cream"],
+    #         fg=colors["coral"]
+    #     ).pack(pady=20)
+
+    #     leaderboard = get_leaderboard(limit=10)
+
+    #     for name, score in leaderboard:
+    #         tk.Label(
+    #             self,
+    #             text=f"{name}: {score}",
+    #             font=("retro_font", 16),
+    #             bg=colors["cream"],
+    #             fg=colors["brown"]
+    #         ).pack(pady=5)
+
+    #     back_btn = ttk.Button(
+    #         self,
+    #         text="BACK",
+    #         style="Coral.TButton",
+    #         command=self.intro
+    #     )
+    #     back_btn.pack(pady=20)
+
+
+    # def tutorial_page(self):
+    #     self.clear_windows()
+    #     self.config_styles()
+
+    #     tutorial = tk.Frame(self, bg=colors["cream"], padx=40, pady=30)
+    #     tutorial.pack(fill="both", expand=True)
+
+    #     # Background image
+    #     bgimg = Image.open("./assets/bg_img_tut.png")
+    #     bgimg = bgimg.resize((1200, 800))
+    #     self.tutorial_bg_img = ImageTk.PhotoImage(bgimg)
+    #     tk.Label(self, image=self.tutorial_bg_img).place(relwidth=1, relheight=1)
+
+    #     # Back button
+    #     tk.Button(
+    #         tutorial,
+    #         text="Back to Menu",
+    #         font=("retro_font", 12, "bold"),
+    #         bg=colors["coral"],
+    #         activebackground=colors["coral_dark"],
+    #         fg="white",
+    #         command=self.intro
+    #     ).pack(pady=20)
+    def tutorial_page(self):
+        self.clear_windows()
+        self.config_styles()
+
+        # --- Background image ---
+        bgimg = Image.open("./assets/bg_img_tut.png")   # 👈 your tutorial background image
+        bgimg = bgimg.resize((1200, 800))
+        self.tutorial_bg_img = ImageTk.PhotoImage(bgimg)
+
+        background_label = tk.Label(self, image=self.tutorial_bg_img)
+        background_label.place(relwidth=1, relheight=1)   # fills the window
+
+        # Back button
+        tk.Button(
+            self,
+            text="Back to Menu",
+            font=("retro_font", 12, "bold"),
+            bg=colors["coral"],
+            activebackground=colors["coral_dark"],
+            fg="white",
+            command=self.intro
+        ).pack(pady=20)
+
+
 
     def draw_intro():
         pass
